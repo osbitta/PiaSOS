@@ -1,0 +1,47 @@
+﻿        /* === MONITORAMENTO HÍBRIDO (CSS RESPONSIVO) === */
+        
+        /* 1. Versão Desktop (Tabelas Fixas) */
+        .desktop-monitor { display: flex; height: 100%; gap: 20px; padding: 20px; }
+        .monitor-col { flex: 1; display: flex; flex-direction: column; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .monitor-header { padding: 15px; font-weight: 700; font-size: 14px; text-transform: uppercase; background: var(--bg-header); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .monitor-body { flex: 1; overflow-y: auto; }
+        
+        table.monitor-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+        table.monitor-table th { background: var(--bg-hover); padding: 12px; text-align: left; color: var(--text-muted); font-size: 11px; position: sticky; top: 0; }
+        table.monitor-table td { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        table.monitor-table tr:hover { background: rgba(255,255,255,0.05); }
+
+        /* 2. Versão Mobile (Painéis Deslizantes) */
+        .mobile-monitor { display: none; width: 100%; height: 100%; overflow: hidden; background: var(--bg-dark); }
+        .sliding-panel { height: 100%; display: flex; flex-direction: column; transition: flex-basis 0.4s ease, width 0.4s ease; border-right: 1px solid var(--border); overflow: hidden; position: relative; }
+        .panel-expanded { flex-basis: 90%; } /* Ajuste mobile */
+        .panel-collapsed { flex-basis: 10%; background: var(--bg-header); cursor: pointer; }
+        .panel-collapsed .monitor-body { display: none; }
+        .panel-collapsed .monitor-header { writing-mode: vertical-rl; text-orientation: mixed; height: 100%; justify-content: center; padding: 0; font-size: 14px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; }
+        .panel-collapsed .monitor-header i { writing-mode: horizontalr-tb; margin: 0 5px; transform: rotate(180deg); }
+
+        /* MEDIA QUERIES (A Mágica) */
+        @media (max-width: 1023px) {
+            .desktop-monitor { display: none; }
+            .mobile-monitor { display: flex; }
+            
+            /* Alertas - sem barra lateral */
+            #view-alertas .desktop-monitor { display: none; }
+            #view-alertas .mobile-monitor { display: none; }
+            #view-alertas #mobile-alertas { display: flex !important; }
+        }
+
+        /* Card Mobile */
+        .card-mobile { background: var(--bg-header); border: 1px solid var(--border); border-left-width: 4px; padding: 15px; margin: 10px; border-radius: 6px; cursor: pointer; }
+        .card-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--border); color: var(--text-muted); margin-right: 5px; }
+        /* Viaturas */
+        .viatura-item { padding: 12px; border: 1px solid var(--border); margin-bottom: 8px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; background: var(--bg-header); }
+        .viatura-item:hover { background: var(--secondary); border-color: var(--info); }
+        /* Respiro para o fundo das listas no Mobile */
+        .scroll-content, 
+        #view-triagem .mobile-monitor,
+        .mobile-monitor .monitor-body, 
+        #monitor-list, 
+        .cards-container {
+            padding-bottom: 60px !important;
+        }
