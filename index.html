@@ -24,6 +24,11 @@
                 <img src="brasao.png" alt="Brasão" style="height: 60px; width: auto; margin-bottom: 15px; object-fit: contain;">
                 <h2 style="margin-top: 10px;">Pia<span style="color: var(--accent);">SOS</span></h2>
             </div>
+            
+            <div style="background-color: rgba(217, 119, 6, 0.15); border: 1px solid rgba(217, 119, 6, 0.5); color: #fbbf24; padding: 12px; border-radius: 8px; font-size: 12px; margin-bottom: 20px; text-align: justify; line-height: 1.5; font-weight: 500;">
+                <i class="fas fa-info-circle" style="margin-right: 5px;"></i> Aplicação em desenvolvimento, a chave de acesso para a criação de usuário é "TESTE". não utilize informações reais ao testa-la, para o login insira qualquer sequencia numerica com 11 digitos no campo cpf e ao gerar e gerenciar ocorrencias, não insira informações reais.
+            </div>
+
             <form onsubmit="handleLogin(event)">
                 <div style="margin-bottom: 10px;"><label>CPF</label><input type="tel" id="loginUser" required placeholder="000.000.000-00"></div>
                 <div style="margin-bottom: 20px;"><label>Senha</label><input type="password" id="loginPass" required></div>
@@ -85,7 +90,7 @@
                                 <div class="section-title"><i class="fas fa-map-marker-alt"></i> Local</div>
                                 <div style="display: flex; gap: 10px;">
                                     <div style="width: 130px;"><label>CEP</label><div class="input-wrapper"><i class="fas fa-search icon-left"></i><input type="tel" id="endCep" onblur="buscarCep(this.value)" maxlength="9" tabindex="4"></div></div>
-                                    <div style="flex: 1;"><label>Cidade</label><div class="input-wrapper"><i class="fas fa-city icon-left"></i><input type="text" id="endCidade" tabindex="5"></div></div>
+                                    <div style="flex: 1; position: relative;"><label>Cidade</label><div class="input-wrapper"><i class="fas fa-city icon-left"></i><input type="text" id="endCidade" oninput="sugerirCidade(this.value)" autocomplete="off" tabindex="5"></div><div id="sugestoesCidade" class="suggestions hidden"></div></div>
                                 </div>
                                 <div style="position: relative;">
                                     <label>Logradouro</label><div class="input-wrapper"><i class="fas fa-road icon-left"></i><input type="text" id="endLog" oninput="sugerirLogradouro(this.value)" autocomplete="off" tabindex="6"></div>
@@ -93,7 +98,7 @@
                                 </div>
                                 <div style="display: flex; gap: 10px;">
                                     <div style="width: 130px;"><label>Nº</label><div class="input-wrapper"><i class="fas fa-hashtag icon-left"></i><input type="text" id="endNum" tabindex="7"></div></div>
-                                    <div style="flex: 1;"><label>Bairro</label><div class="input-wrapper"><i class="fas fa-map icon-left"></i><input type="text" id="endBairro" tabindex="8"></div></div>
+                                    <div style="flex: 1; position: relative;"><label>Bairro</label><div class="input-wrapper"><i class="fas fa-map icon-left"></i><input type="text" id="endBairro" oninput="sugerirBairro(this.value)" autocomplete="off" tabindex="8"></div><div id="sugestoesBairro" class="suggestions hidden"></div></div>
                                 </div>
                                 <div>
                                     <label>Referência</label>
@@ -418,6 +423,20 @@
                     </div>
                 </div>
 
+                <div id="modalEditarUsuario" class="modal-overlay">
+                    <div class="modal-content" style="max-width:420px;">
+                        <div class="modal-header"><h3>Editar Usuário</h3><i class="fas fa-times" onclick="fecharModal('modalEditarUsuario')" style="cursor:pointer"></i></div>
+                        <div class="modal-body">
+                            <div style="margin-bottom:8px;"><label>Nome Completo (ou de Guerra)</label><input type="text" id="edu_nome" required></div>
+                            <div style="margin-bottom:8px;"><label>CPF (Bloqueado)</label><input type="text" id="edu_cpf" disabled style="background-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed;"></div>
+                            <div style="margin-bottom:8px;"><label>Perfil</label><select id="edu_perfil"><option>Atendente</option><option>Despachante</option><option>Admin</option></select></div>
+                            <div style="margin-bottom:8px;"><label>Senha</label><input type="password" id="edu_senha" required></div>
+                            <input type="hidden" id="edu_id">
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-sm btn-success" onclick="salvarEdicaoUsuario()">Salvar</button><button type="button" class="btn btn-sm btn-outline" onclick="fecharModal('modalEditarUsuario')">Cancelar</button></div>
+                    </div>
+                </div>
+
                 <div id="modalNewKey" class="modal-overlay">
                     <div class="modal-content" style="max-width:420px;">
                         <div class="modal-header"><h3>Nova Chave de Acesso</h3><i class="fas fa-times" onclick="fecharModal('modalNewKey')" style="cursor:pointer"></i></div>
@@ -705,6 +724,7 @@
         </div>
     </div>
 
+<script src="js/dados_parana.js"></script>
 <script src="js/main.js"></script>
 
 <div id="modalConfigPui" class="modal-overlay" style="z-index: 250;">
