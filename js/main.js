@@ -382,6 +382,75 @@ async function aplicarPui() {
 
         let timeoutLog; function sugerirLogradouro(txt) { clearTimeout(timeoutLog); const box=document.getElementById('sugestoesLog'); const cid=document.getElementById('endCidade').value; if(txt.length<4||!cid){box.classList.add('hidden');return;} timeoutLog=setTimeout(async()=>{ try{const r=await fetch(`https://nominatim.openstreetmap.org/search?street=${txt}&city=${cid}&state=Parana&format=json&limit=5`);const d=await r.json();box.innerHTML='';if(d.length){box.classList.remove('hidden');d.forEach(i=>{const div=document.createElement('div');div.className='sugg-item';div.innerText=i.display_name.split(',')[0];div.onclick=()=>{document.getElementById('endLog').value=div.innerText;box.classList.add('hidden');};box.appendChild(div);});}}catch(e){} },500); }
 
+        function _sugNorm(str) { return str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase() : ''; }
+
+        let timeoutCid; 
+        function sugerirCidade(txt) { 
+            clearTimeout(timeoutCid); 
+            const box = document.getElementById('sugestoesCidade'); 
+            if(!box) return;
+            const termo = _sugNorm(txt);
+            if(termo.length < 2) { box.classList.add('hidden'); return; } 
+            
+            timeoutCid = setTimeout(() => { 
+                try {
+                    const matches = cidadesPR.filter(c => _sugNorm(c).includes(termo)).slice(0, 10);
+                    box.innerHTML = ''; 
+                    if(matches.length){
+                        box.classList.remove('hidden');
+                        matches.forEach(c => {
+                            const div = document.createElement('div');
+                            div.className = 'sugg-item';
+                            div.innerText = c;
+                            div.onclick = () => { 
+                                document.getElementById('endCidade').value = div.innerText; 
+                                box.classList.add('hidden'); 
+                                const endBairro = document.getElementById('endBairro');
+                                if(endBairro) endBairro.focus();
+                                if(typeof renderizarRadarLateral === 'function') renderizarRadarLateral();
+                            };
+                            box.appendChild(div);
+                        });
+                    } else { box.classList.add('hidden'); }
+                } catch(e) { box.classList.add('hidden'); }
+            }, 300); 
+        }
+
+        let timeoutBairro; 
+        function sugerirBairro(txt) { 
+            clearTimeout(timeoutBairro); 
+            const box = document.getElementById('sugestoesBairro'); 
+            if(!box) return;
+            const termo = _sugNorm(txt);
+            const cid = document.getElementById('endCidade').value;
+            
+            if(termo.length < 1 || !cid) { box.classList.add('hidden'); return; } 
+            
+            const cidNorm = _sugNorm(cid);
+            const bairrosDaCidade = localidadesPR[cidNorm];
+            if(!bairrosDaCidade) { box.classList.add('hidden'); return; }
+            
+            timeoutBairro = setTimeout(() => { 
+                try {
+                    const matches = bairrosDaCidade.filter(b => _sugNorm(b).includes(termo)).slice(0, 15);
+                    box.innerHTML = ''; 
+                    if(matches.length){
+                        box.classList.remove('hidden');
+                        matches.forEach(b => {
+                            const div = document.createElement('div');
+                            div.className = 'sugg-item';
+                            div.innerText = b;
+                            div.onclick = () => { 
+                                document.getElementById('endBairro').value = div.innerText; 
+                                box.classList.add('hidden'); 
+                                if(typeof renderizarRadarLateral === 'function') renderizarRadarLateral();
+                            };
+                            box.appendChild(div);
+                        });
+                    } else { box.classList.add('hidden'); }
+                } catch(e) { box.classList.add('hidden'); }
+            }, 300); 
+        }
         // lista de naturezas estática para autocomplete
         const naturezasList = [
             "ABORDAGEM DE SUSPEITOS",
@@ -460,6 +529,7 @@ async function aplicarPui() {
                 e.preventDefault();
                 if(naturezaNavIndex >= 0) selectNatureza(naturezaCurrentMatches[naturezaNavIndex]);
                 else if(naturezaCurrentMatches.length > 0) selectNatureza(naturezaCurrentMatches[0]);
+                document.getElementById('ocRelato').focus();
             }
         });
         
@@ -547,7 +617,7 @@ async function aplicarPui() {
             const el = document.getElementById('solNome'); 
             el.value = (el.value === 'ANÔNIMO') ? '' : 'ANÔNIMO'; 
         }
-        function limparAtendimento() { document.forms[1].reset(); veiculosArray=[]; suspeitosArray=[]; renderList('listaVeiculos',[]); renderList('listaSuspeitos',[]); idEmEdicao=null; }
+        function limparAtendimento() { document.forms[1].reset(); veiculosArray=[]; suspeitosArray=[]; renderList('listaVeiculos',[]); renderList('listaSuspeitos',[]); idEmEdicao=null; ocoAtual=null; }
         
         function calcularRisco(tags) {
             const critic = ['ARMA DE FOGO', 'ARMA BRANCA', 'EXPLOSIVO', 'EM ANDAMENTO', 'FERIDOS (SIM)', 'ARMADO (SIM)'];
@@ -588,6 +658,11 @@ async function aplicarPui() {
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
             };
+
+            if (idEmEdicao && ocoAtual && ocoAtual.status === 'EM_TRIAGEM' && destino === 'DESPACHO') {
+                payload.criado_em = new Date().toISOString();
+            }
+
             try {
                 if(idEmEdicao) await api('tb_triagem', `id=eq.${idEmEdicao}`, 'PATCH', payload);
                 else await api('tb_triagem', '', 'POST', payload);
@@ -632,10 +707,20 @@ async function aplicarPui() {
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
             };
+
+            if (idEmEdicao && ocoAtual && ocoAtual.status === 'EM_TRIAGEM') {
+                payload.criado_em = new Date().toISOString();
+            }
+
             try {
-                const resp = await api('tb_triagem', '', 'POST', payload);
-                // Armazenar ID da ocorrência gerada
-                ultimaOcorrenciaGerada = resp[0]?.id || null;
+                let resp;
+                if(idEmEdicao) {
+                    resp = await api('tb_triagem', `id=eq.${idEmEdicao}`, 'PATCH', payload);
+                    ultimaOcorrenciaGerada = idEmEdicao;
+                } else {
+                    resp = await api('tb_triagem', '', 'POST', payload);
+                    ultimaOcorrenciaGerada = resp[0]?.id || null;
+                }
                 
                 if(ultimaOcorrenciaGerada) {
                     // Limpar campo de complemento
@@ -836,6 +921,7 @@ async function aplicarPui() {
         async function retomarAtendimento(id) {
             try {
                 const d = await api('tb_triagem', `id=eq.${id}&select=*`); const oc=d[0]; const info=oc.dados_preenchidos;
+                ocoAtual = oc;
                 document.getElementById('solTel').value=info.solicitante.telefone||''; document.getElementById('solNome').value=info.solicitante.nome||'';
                 document.getElementById('endCep').value=info.endereco.cep||''; document.getElementById('endCidade').value=info.endereco.cidade||''; document.getElementById('endLog').value=info.endereco.logradouro||''; document.getElementById('endNum').value=info.endereco.numero||''; document.getElementById('endBairro').value=info.endereco.bairro||''; document.getElementById('endRef').value=info.endereco.referencia||'';
                 document.getElementById('ocNatureza').value=info.natureza||''; document.getElementById('ocRelato').value=oc.resumo_texto||'';
@@ -1140,8 +1226,9 @@ async function aplicarPui() {
                 tb.innerHTML='';
                 users.forEach(u=>{
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td style="padding:10px">${u.nome_guerra||''}</td><td style="padding:10px">${u.cpf_login||''}</td><td style="padding:10px">${u.perfil||''}</td><td style="padding:10px">${u.status_conta||''}</td><td style="padding:10px"><div style="display:flex;gap:6px"><button class="btn btn-sm btn-success" onclick="aprovarUsuario('${u.id}')">✅</button><button class="btn btn-sm btn-outline" onclick="bloquearUsuario('${u.id}')">🚫</button><button class="btn btn-sm btn-outline" onclick="resetSenha('${u.id}')">🔄</button></div></td>`;
+                    tr.innerHTML = `<td style="padding:10px">${u.nome_guerra||''}</td><td style="padding:10px">${u.cpf_login||''}</td><td style="padding:10px">${u.perfil||u.perfil_acesso||''}</td><td style="padding:10px">${u.status_conta||''}</td><td style="padding:10px"><div style="display:flex;gap:6px"><button class="btn btn-sm btn-success" onclick="aprovarUsuario('${u.id}')" title="Aprovar">✅</button><button class="btn btn-sm btn-outline" onclick="bloquearUsuario('${u.id}')" title="Bloquear">🚫</button><button class="btn btn-sm btn-outline" onclick="resetSenha('${u.id}')" title="Reset Senha">🔄</button><button class="btn btn-sm btn-outline" onclick="abrirEdicaoUsuario('${u.id}')" title="Editar">✏️</button><button class="btn btn-sm btn-outline" onclick="excluirUsuario('${u.id}')" title="Excluir">🗑️</button></div></td>`;
                     tr.style.borderBottom = '1px solid var(--border)';
+                    if(u.status_conta === 'EXCLUIDO') tr.style.opacity = '0.5';
                     tb.appendChild(tr);
                 });
             }catch(e){ tb.innerHTML='<tr><td colspan="5">Erro.</td></tr>'; }
@@ -1156,6 +1243,34 @@ async function aplicarPui() {
         async function aprovarUsuario(id){ if(!confirm('Aprovar?')) return; await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { status_conta: 'VALIDADO' }); carregarUsuarios(); }
         async function bloquearUsuario(id){ if(!confirm('Bloquear?')) return; await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { status_conta: 'BLOQUEADO' }); carregarUsuarios(); }
         async function resetSenha(id){ if(!confirm('Resetar senha?')) return; await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { senha: '123' }); alert('Senha: 123'); }
+        async function excluirUsuario(id){ if(!confirm('Excluir este usuário?')) return; await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { status_conta: 'EXCLUIDO' }); carregarUsuarios(); }
+        
+        async function abrirEdicaoUsuario(id) {
+            try {
+                const res = await api('tb_usuarios', `id=eq.${id}&select=*`);
+                if(!res.length) return;
+                const u = res[0];
+                document.getElementById('edu_id').value = u.id;
+                document.getElementById('edu_nome').value = u.nome_guerra || '';
+                document.getElementById('edu_cpf').value = u.cpf_login || '';
+                document.getElementById('edu_perfil').value = u.perfil_acesso || u.perfil || 'Atendente';
+                document.getElementById('edu_senha').value = u.senha || '';
+                document.getElementById('modalEditarUsuario').style.display='flex';
+            } catch(e) { alert('Erro ao buscar usuário: ' + e.message); }
+        }
+        
+        async function salvarEdicaoUsuario() {
+            const id = document.getElementById('edu_id').value;
+            const nome = document.getElementById('edu_nome').value;
+            const perfil = document.getElementById('edu_perfil').value;
+            const senha = document.getElementById('edu_senha').value;
+            try {
+                await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { nome_guerra: nome, perfil_acesso: perfil, senha: senha });
+                fecharModal('modalEditarUsuario');
+                alert('Salvo com sucesso!');
+                carregarUsuarios();
+            } catch(e) { alert('Erro ao salvar: ' + e.message); }
+        }
 
         // --- Chaves ---
         function openNewKeyModal(){ document.getElementById('modalNewKey').style.display='flex'; }
@@ -1509,6 +1624,15 @@ async function aplicarPui() {
         
         async function abrirModalOcorrencia(id, origem = 'monitoramento') {
             idOcorrenciaAberta = id;
+            
+            // Recolher a barra da direita (Radar) caso esteja ativa no mobile
+            const radar = document.getElementById('coluna-radar');
+            const fab = document.getElementById('fab-radar');
+            if (radar && radar.classList.contains('offcanvas-active')) {
+                radar.classList.remove('offcanvas-active');
+                if (fab) fab.classList.remove('fab-active');
+            }
+            
             try {
                 // Limpar timer anterior se existir
                 if (timerIntervalOcorrencia) {
@@ -2319,7 +2443,11 @@ function renderizarRadarLateral() {
             score += 1;
         }
 
-        return { ...oc, score };
+        const matchRua = (filtroRua && filtroRua.length > 2 && ocRua.includes(filtroRua));
+        const matchCidade = (filtroCidade && ocCidade.includes(filtroCidade));
+        const isDupl = matchRua && matchCidade;
+
+        return { ...oc, score, isDuplicidade: isDupl };
     });
 
     filtradas.sort((a, b) => {
@@ -2339,8 +2467,10 @@ function renderizarRadarLateral() {
         let descText = oc.resumo_texto || "Sem descrição.";
         descText = descText.replace(/"/g, '&quot;');
 
+        const estiloFundo = oc.isDuplicidade ? 'background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.5);' : '';
+
         html += `
-            <div class="sade-card" data-descricao="${descText}" onclick="abrirModalOcorrencia('${oc.id}', 'atendimento')" style="cursor:pointer;">
+            <div class="sade-card" data-descricao="${descText}" onclick="abrirModalOcorrencia('${oc.id}', 'atendimento')" style="cursor:pointer; ${estiloFundo}">
                 <div class="card-topo">
                     <span class="card-natureza" title="${info.natureza || 'N/I'}">${info.natureza || 'N/A'}</span>
                     <span class="card-badge ${cssBadge}">${strBadge}</span>
@@ -2363,12 +2493,56 @@ setTimeout(() => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', renderizarRadarLateral);
     });
+
+    const camposAuto = [
+        { in: 'endCidade', sug: 'sugestoesCidade', prox: 'endLog' },
+        { in: 'endLog', sug: 'sugestoesLog', prox: 'endNum' },
+        { in: 'endBairro', sug: 'sugestoesBairro', prox: 'endRef' },
+        { in: 'ocNatureza', sug: 'sugestoesNatureza', prox: 'ocRelato' }
+    ];
+    camposAuto.forEach(c => {
+        const el = document.getElementById(c.in);
+        if (!el) return;
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                const box = document.getElementById(c.sug);
+                if (box && !box.classList.contains('hidden') && box.firstChild) {
+                    e.preventDefault();
+                    box.firstChild.click();
+                    const p = document.getElementById(c.prox);
+                    if (p) p.focus();
+                }
+            }
+        });
+    });
+
+    const ocRelato = document.getElementById('ocRelato');
+    if (ocRelato) {
+        ocRelato.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab' && !e.shiftKey) {
+                e.preventDefault();
+                const btn = document.getElementById('btnGerar');
+                if (btn) btn.focus();
+            }
+        });
+    }
+
+    const btnGerar = document.getElementById('btnGerar');
+    if (btnGerar) {
+        btnGerar.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab' && !e.shiftKey) {
+                e.preventDefault();
+                const tel = document.getElementById('solTel');
+                if (tel) tel.focus();
+            }
+        });
+    }
+
     // Ao iniciar o app, carregar o radar
     carregarOcorrenciasParaRadar();
     // Refresh dos dados no banco a cada 1 minuto
     setInterval(carregarOcorrenciasParaRadar, 60000);
 }, 1000);
-
 // --- Função FAB Mobile ---
 function toggleRadarMobile() {
     const radar = document.getElementById('coluna-radar');
