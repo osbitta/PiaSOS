@@ -740,4 +740,274 @@
                 </div>
                 <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
                     <div class="drawer-section-title"><i class="fas fa-history"></i> Descrição</div>
-                    <div 
+                    <div id="mo-historico" style="font-size:12px; line-height:1.5; color:var(--text-light);">Nenhuma informação</div>
+                </div>
+                <div id="mo-recursos-container" style="display:none;">
+                    <div class="drawer-section-title"><i class="fas fa-car"></i> Recursos</div>
+                    <div id="mo-recursos" style="font-size:11px;">Nenhum recurso</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; gap:10px;">
+                <button class="btn" id="mo-btn-complementar" onclick="abrirComplementoMonitoramento()" style="width: auto; background: var(--secondary); color: white;">COMPLEMENTAR</button>
+                <button class="btn btn-info" id="mo-btn-editar" onclick="editarEndereco()"><i class="fas fa-pen"></i> Editar Endereço</button>
+                <button class="btn btn-success" id="mo-btn-acao" onclick="abrirSelecaoFrotaModal(idOcorrenciaAberta, 'PRINCIPAL')">Despachar</button>
+                <button class="btn btn-danger" id="mo-btn-finalizar" onclick="finalizarOcorrenciaModal(idOcorrenciaAberta)"><i class="fas fa-flag"></i> Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAlerta" class="modal-overlay" style="z-index:250;">
+        <div class="modal-content" style="max-width:700px; max-height:85vh;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap:15px; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h3 id="ma-natureza" style="margin:0; font-size:18px;">Alerta</h3>
+                            <span style="background:#8b5cf6; color:white; padding:2px 8px; border-radius:12px; font-size:12px;">ALERTA</span>
+                        </div>
+                        <div id="ma-criado-em" style="font-size:12px; color:var(--text-muted); font-weight:500;">Gerado em: --</div>
+                    </div>
+                    <div style="display:flex; gap:15px; font-size:11px; color:var(--text-muted);">
+                        <span id="ma-id">ID: --</span>
+                        <span id="ma-timer">00:00</span>
+                    </div>
+                    <div id="ma-tags" style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;"></div>
+                </div>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <i class="fas fa-copy" id="ma-iconeCopiarSade" title="Copiar p/ SADE" style="cursor:pointer; font-size:18px; color:var(--text-muted); transition:0.2s;"></i>
+                    <i class="fab fa-whatsapp" onclick="compartilharWhatsApp(idAlertaAberto)" title="Compartilhar WhatsApp" style="cursor:pointer; font-size:18px; color:var(--text-muted); transition:0.2s;"></i>
+                    <i class="fas fa-times" onclick="fecharModal('modalAlerta')" style="cursor:pointer; font-size:20px; color:var(--text-muted);"></i>
+                </div>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:15px;">
+                <div class="modal-grid-responsive" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
+                    <div class="drawer-section-title"><i class="fas fa-map-pin"></i> Local</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                        <div id="ma-endereco" style="font-size:12px; line-height:1.4;">Endereço</div>
+                        <button class="btn btn-sm btn-outline" id="ma-btn-mapa" title="Abrir no Mapa" style="padding:10px;"><i class="fas fa-map-marked-alt" style="font-size:16px;"></i></button>
+                    </div>
+                </div>
+                <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
+                    <div class="drawer-section-title"><i class="fas fa-user"></i> Solicitante</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                        <div>
+                            <div id="ma-nome" style="font-size:12px;">Nome: --</div>
+                            <div id="ma-telefone" style="font-size:12px;">Tel: --</div>
+                        </div>
+                        <a href="#" id="ma-btn-ligar" title="Ligar" style="color: var(--text-muted); font-size: 16px; margin-left: 8px; text-decoration: none; transition: 0.2s;"><i class="fas fa-phone"></i></a>
+                    </div>
+                </div>
+                </div>
+                <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
+                    <div class="drawer-section-title"><i class="fas fa-history"></i> Descrição</div>
+                    <div id="ma-historico" style="font-size:12px; line-height:1.5; color:var(--text-light);">Nenhuma informação</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; gap:10px;">
+                <button class="btn" onclick="abrirComplementoMonitoramento()" style="width: auto; background: var(--secondary); color: white;">COMPLEMENTAR</button>
+                <button class="btn btn-info" onclick="editarEndereco()"><i class="fas fa-pen"></i> Editar Endereço</button>
+                <button class="btn btn-success" onclick="promoverAlertaFromModal(idAlertaAberto)"><i class="fas fa-level-up-alt"></i> PROMOVER</button>
+                <button class="btn btn-danger" onclick="finalizarOcorrenciaModal(idAlertaAberto)"><i class="fas fa-flag"></i> Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalFinalizacao" class="modal-overlay" style="z-index: 260;">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 style="margin:0;">Finalizar Ocorrência</h3>
+                <i class="fas fa-times" onclick="fecharModal('modalFinalizacao')" style="cursor:pointer; font-size:18px; color:var(--text-muted);"></i>
+            </div>
+            <div class="modal-body">
+                <div class="input-wrapper" id="wrapper-mf-bo">
+                    <label>Nº BO / Protocolo</label>
+                    <input type="text" id="mf-bo" placeholder="Ex: 12345/2026">
+                </div>
+                <div class="input-wrapper">
+                    <label>Desfecho / Observações Finais</label>
+                    <textarea id="mf-observacoes" placeholder="Descreva o desfecho da ocorrência..." style="height:120px; resize:none;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; gap:10px;">
+                <button class="btn btn-danger" onclick="fecharModal('modalFinalizacao')">Cancelar</button>
+                <button class="btn btn-success" onclick="confirmarFinalizacao()">Confirmar Finalização</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalSelecaoFrota" class="modal-overlay" style="z-index:260;">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3 style="margin:0;">Selecionar Viatura</h3>
+                <i class="fas fa-times" onclick="fecharModal('modalSelecaoFrota')" style="cursor:pointer; font-size:18px; color:var(--text-muted);"></i>
+            </div>
+            <div class="modal-body" style="max-height:400px; overflow-y:auto;">
+                <div id="msfLista" style="display:flex; flex-direction:column; gap:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+<script src="js/dados_parana.js"></script>
+<script src="js/main.js"></script>
+
+<div id="modalConfigPui" class="modal-overlay" style="z-index: 250;">
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-cog"></i> Configuração PUI (Groq)</h3>
+            <i class="fas fa-times" onclick="fecharModal('modalConfigPui')" style="cursor:pointer;"></i>
+        </div>
+        <div class="modal-body">
+            <label>Chave API (Groq)</label>
+            <div class="input-wrapper" style="margin-bottom:5px;">
+                <i class="fas fa-key icon-left"></i>
+                <input type="password" id="puiApiKey" placeholder="gsk_...">
+            </div>
+            <div style="font-size:11px; margin-bottom:15px; text-align:right;">
+                <a href="https://console.groq.com/keys" target="_blank" style="color:var(--info); text-decoration:none;">🔗 Gerar chave gratuita no Groq</a>
+            </div>
+            <label>Prompt do Sistema (Instrução da IA)</label>
+            <textarea id="puiPrompt" rows="5" style="width:100%; background:var(--bg-input); color:var(--text-light); border:1px solid var(--border); border-radius:4px; padding:10px; font-size:12px; resize:vertical;"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-outline" onclick="fecharModal('modalConfigPui')">CANCELAR</button>
+            <button type="button" class="btn btn-sm btn-success" onclick="salvarConfigPui()">SALVAR CONFIGURAÇÃO</button>
+        </div>
+    </div>
+</div>
+
+    <!-- MODAL: ALTERAR PERFIL (MODERADOR) -->
+    <div id="modalAlterarPerfil" class="modal-overlay">
+        <div class="modal-content" style="max-width:380px;">
+            <div class="modal-header">
+                <h3>Alterar Perfil do Usuário</h3>
+                <i class="fas fa-times" onclick="fecharModal('modalAlterarPerfil')" style="cursor:pointer;"></i>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ap_id">
+                <div style="margin-bottom:10px;">
+                    <label>Usuário</label>
+                    <input type="text" id="ap_nome" disabled style="background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:not-allowed;">
+                </div>
+                <div>
+                    <label>Novo Perfil</label>
+                    <select id="ap_perfil" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
+                        <option value="ATENDENTE">Atendente</option>
+                        <option value="Despachante">Despachante</option>
+                        <option value="Admin">Admin</option>
+                        <option value="MODERADOR">Moderador</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-success" onclick="moderadorSalvarAlterarPerfil()">Salvar</button>
+                <button class="btn btn-sm btn-outline" onclick="fecharModal('modalAlterarPerfil')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR CHAVE (MODERADOR) -->
+    <div id="modalEditarChave" class="modal-overlay">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3>Editar Chave de Acesso</h3>
+                <i class="fas fa-times" onclick="fecharModal('modalEditarChave')" style="cursor:pointer;"></i>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ek_id">
+                <div style="margin-bottom:8px;">
+                    <label>Código</label>
+                    <input type="text" id="ek_codigo" placeholder="Ex: ADM-LONDRINA-2026" style="text-transform:uppercase;">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <div style="flex:1;">
+                        <label>Perfil Concedido</label>
+                        <select id="ek_perfil" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
+                            <option value="Atendente">Atendente</option>
+                            <option value="Despachante">Despachante</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Validade</label>
+                        <select id="ek_validade" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
+                            <option value="3600">1 hora</option>
+                            <option value="86400">24 horas</option>
+                            <option value="604800">7 dias</option>
+                            <option value="0">Permanente</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom:8px; margin-top:4px;">
+                    <label>Restringir à Cidade <span style="font-weight:400; color:var(--text-muted); font-size:11px;">(opcional)</span></label>
+                    <input type="text" id="ek_cidade" placeholder="Ex: CURITIBA" style="text-transform:uppercase;">
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                    <input type="checkbox" id="ek_ativa" style="width:auto;">
+                    <label for="ek_ativa" style="margin:0; cursor:pointer;">Chave ativa</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-success" onclick="moderadorSalvarEdicaoChave()">Salvar</button>
+                <button class="btn btn-sm btn-outline" onclick="fecharModal('modalEditarChave')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL DE PERFIL DO USUÁRIO -->
+    <div id="modalPerfil" class="modal-overlay" style="z-index: 260;">
+        <div class="modal-content" style="max-width:460px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle" style="margin-right:8px; color:var(--secondary);"></i>Meu Perfil</h3>
+                <i class="fas fa-times" onclick="fecharModal('modalPerfil')" style="cursor:pointer"></i>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:15px;">
+                <!-- Seção Superior: Dados somente leitura -->
+                <div style="background:var(--bg-header); border:1px solid var(--border); border-radius:8px; padding:15px;">
+                    <div style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:10px;">Informações do Cadastro</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 15px;">
+                        <div>
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">CPF</div>
+                            <div id="pf_cpf" style="font-size:13px; font-weight:500; color:var(--text-light); margin-top:2px;">---</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Perfil de Acesso</div>
+                            <div id="pf_perfil" style="font-size:13px; font-weight:500; color:var(--text-light); margin-top:2px;">---</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Agência</div>
+                            <div id="pf_agencia" style="font-size:13px; font-weight:500; color:var(--text-light); margin-top:2px;">---</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">UF</div>
+                            <div id="pf_uf" style="font-size:13px; font-weight:500; color:var(--text-light); margin-top:2px;">---</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Jurisdição</div>
+                            <div id="pf_cidade" style="font-size:13px; font-weight:500; color:var(--text-light); margin-top:2px;">---</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Status</div>
+                            <div id="pf_status" style="font-size:13px; font-weight:500; margin-top:2px;">---</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção Inferior: Dados editáveis -->
+                <div>
+                    <div style="font-size:11px; font-weight:700; color:var(--secondary); text-transform:uppercase; margin-bottom:10px;"><i class="fas fa-pen" style="margin-right:6px;"></i>Dados Editáveis</div>
+                    <div style="margin-bottom:8px;"><label>Nome Completo</label><input type="text" id="pf_nome_completo" style="padding-left:10px;"></div>
+                    <div style="margin-bottom:8px;"><label>Nome de Guerra</label><input type="text" id="pf_nome_guerra" style="padding-left:10px;"></div>
+                    <div style="margin-bottom:4px;"><label>Nova Senha <span style="font-weight:400; color:var(--text-muted); font-size:10px;">(deixe vazio para manter a atual)</span></label><input type="password" id="pf_senha" placeholder="••••••••" style="padding-left:10px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-success" onclick="salvarPerfil()">SALVAR</button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="fecharModal('modalPerfil')">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
