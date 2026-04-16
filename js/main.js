@@ -188,7 +188,13 @@ async function aplicarPui() {
         }
 
         function navegar(tela) {
-            ['atendimento', 'triagem', 'monitoramento', 'frota', 'alertas', 'admin'].forEach(t => {
+            // Guardrails por perfil
+            const perfil = usuarioAtual?.perfil_acesso;
+            if (perfil === 'MODERADOR' && tela !== 'moderador') tela = 'moderador';
+            if (perfil === 'Admin' && tela === 'moderador') tela = 'atendimento';
+            if (perfil !== 'Admin' && perfil !== 'MODERADOR' && ['admin','moderador'].includes(tela)) tela = 'atendimento';
+
+            ['atendimento', 'triagem', 'monitoramento', 'frota', 'alertas', 'admin', 'moderador'].forEach(t => {
                 const el = document.getElementById('view-'+t);
                 const nav = document.getElementById('nav-'+t);
                 if(el) el.classList.add('hidden');
@@ -210,6 +216,7 @@ async function aplicarPui() {
                 // Abre aba usuários por padrão se nenhuma estiver ativa
                 if(document.getElementById('admin-usuarios').classList.contains('hidden')) adminSwitch('usuarios');
             }
+            if(tela === 'moderador') carregarUsuariosModerador();
         }
 
         function expandMob(side) {
@@ -222,7 +229,87 @@ async function aplicarPui() {
             }
         }
 
-        function mostrarApp() { document.getElementById('login-wrapper').style.display='none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('userAvatar').innerText=usuarioAtual.nome_guerra[0]; navegar('atendimento'); }
+        function mostrarApp() {
+            document.getElementById('login-wrapper').style.display='none';
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            document.getElementById('userAvatar').innerText=usuarioAtual.nome_guerra[0];
+
+            // Controle de visibilidade da navbar por perfil
+            const perfil = usuarioAtual.perfil_acesso;
+            const todosNavIds = ['atendimento','triagem','monitoramento','frota','alertas','admin','moderador'];
+            const permitidos = perfil === 'MODERADOR'
+                ? ['moderador']
+                : perfil === 'Admin'
+                    ? ['atendimento','triagem','monitoramento','frota','alertas','admin']
+                    : ['atendimento','triagem','monitoramento','frota','alertas'];
+
+            todosNavIds.forEach(id => {
+                const el = document.getElementById('nav-' + id);
+                if(el) el.classList.toggle('hidden', !permitidos.includes(id));
+            });
+
+            navegar('atendimento'); // navegar() redireciona para 'moderador' se perfil for MODERADOR
+            // Carregar o radar com filtro de agência correto após login
+            if(typeof carregarOcorrenciasParaRadar === 'function') carregarOcorrenciasParaRadar();
+        }
+
+        // --- PERFIL DO USUÁRIO ---
+        function abrirModalPerfil() {
+            if(!usuarioAtual) return;
+            // Preencher dados somente leitura
+            const cpf = usuarioAtual.cpf_login || '---';
+            const cpfFmt = cpf.length === 11 ? cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : cpf;
+            document.getElementById('pf_cpf').innerText = cpfFmt;
+            document.getElementById('pf_perfil').innerText = usuarioAtual.perfil_acesso || '---';
+            document.getElementById('pf_agencia').innerText = usuarioAtual.agencia || '---';
+            document.getElementById('pf_uf').innerText = usuarioAtual.uf_origem || '---';
+            document.getElementById('pf_cidade').innerText = usuarioAtual.cidade_origem || 'ESTADUAL';
+            
+            const statusEl = document.getElementById('pf_status');
+            const st = usuarioAtual.status_conta || '---';
+            statusEl.innerText = st;
+            statusEl.style.color = st === 'VALIDADO' ? 'var(--success)' : st === 'PENDENTE' ? 'var(--warning)' : st === 'BLOQUEADO' ? 'var(--danger)' : 'var(--text-light)';
+
+            // Preencher dados editáveis
+            document.getElementById('pf_nome_completo').value = usuarioAtual.nome_completo || '';
+            document.getElementById('pf_nome_guerra').value = usuarioAtual.nome_guerra || '';
+            document.getElementById('pf_senha').value = '';
+
+            document.getElementById('modalPerfil').style.display = 'flex';
+        }
+
+        async function salvarPerfil() {
+            const nomeCompleto = document.getElementById('pf_nome_completo').value.trim();
+            const nomeGuerra = document.getElementById('pf_nome_guerra').value.trim();
+            const novaSenha = document.getElementById('pf_senha').value;
+
+            if(!nomeCompleto || !nomeGuerra) {
+                alert('Nome Completo e Nome de Guerra são obrigatórios.');
+                return;
+            }
+
+            const payload = {
+                nome_completo: nomeCompleto,
+                nome_guerra: nomeGuerra
+            };
+            if(novaSenha) payload.senha = novaSenha;
+
+            try {
+                await api('tb_usuarios', `id=eq.${usuarioAtual.id}`, 'PATCH', payload);
+                // Atualizar dados locais
+                usuarioAtual.nome_completo = nomeCompleto;
+                usuarioAtual.nome_guerra = nomeGuerra;
+                if(novaSenha) usuarioAtual.senha = novaSenha;
+                localStorage.setItem('piabi_user', JSON.stringify(usuarioAtual));
+                // Atualizar avatar
+                document.getElementById('userAvatar').innerText = nomeGuerra[0];
+                alert('Perfil atualizado com sucesso!');
+                fecharModal('modalPerfil');
+            } catch(e) {
+                alert('Erro ao salvar perfil: ' + e.message);
+            }
+        }
+
         function logout() { localStorage.removeItem('piabi_user'); window.location.reload(); }
         function toggleTheme() { 
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -260,6 +347,10 @@ async function aplicarPui() {
         }
 
         async function solicitarCadastro() {
+            const cad_agencia = document.getElementById('cad_agencia') ? document.getElementById('cad_agencia').value : '';
+            const cad_uf = document.getElementById('cad_uf') ? document.getElementById('cad_uf').value : '';
+            const cad_cidade = document.getElementById('cad_cidade') ? document.getElementById('cad_cidade').value.trim().toUpperCase() : '';
+
             const chave = document.getElementById('cad_chave').value.trim();
             const nome = document.getElementById('cad_nome').value.trim();
             const guerra = document.getElementById('cad_guerra').value.trim();
@@ -267,8 +358,8 @@ async function aplicarPui() {
             const senha = document.getElementById('cad_senha').value;
 
             // Validações
-            if(!nome || !guerra || !cpf || !senha) {
-                alert('Preencha todos os campos obrigatórios.');
+            if(!cad_agencia || !cad_uf || !nome || !guerra || !cpf || !senha) {
+                alert('Preencha os dados da Agência, UF e todos os campos obrigatórios.');
                 return;
             }
 
@@ -285,6 +376,15 @@ async function aplicarPui() {
                 if(chave) {
                     const k = await api('tb_chaves_acesso', `codigo=eq.${chave}&ativa=eq.true&select=*`);
                     if(k.length > 0) {
+                        // Verificar restrição de cidade da chave
+                        const restricaoCidade = (k[0].cidade_restricao || '').trim().toUpperCase();
+                        if(restricaoCidade) {
+                            const cidadeInformada = cad_cidade.trim().toUpperCase();
+                            if(cidadeInformada !== restricaoCidade) {
+                                alert(`❌ Esta chave de acesso só pode ser utilizada para cadastros na cidade de ${restricaoCidade}.\n\nInforme a cidade correta no campo "Jurisdição Municipal".`);
+                                return;
+                            }
+                        }
                         status = 'VALIDADO';
                         if(k[0].perfil_padrao) perfil = k[0].perfil_padrao;
                     } else {
@@ -299,7 +399,10 @@ async function aplicarPui() {
                     cpf_login: cpf,
                     senha: senha,
                     perfil_acesso: perfil,
-                    status_conta: status
+                    status_conta: status,
+                    agencia: cad_agencia,
+                    uf_origem: cad_uf,
+                    cidade_origem: cad_cidade
                 });
 
                 const msg = status === 'VALIDADO' 
@@ -314,6 +417,33 @@ async function aplicarPui() {
 
         // --- ATENDIMENTO ---
         async function buscarCep(cep) { cep=cep.replace(/\D/g,''); if(cep.length!==8)return; try{const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`);const d=await r.json();if(!d.erro){ document.getElementById('endLog').value=d.logradouro; document.getElementById('endBairro').value=d.bairro; document.getElementById('endCidade').value=d.localidade; }}catch(e){} }
+
+        // --- HELPERS DE AGÊNCIA ---
+        function _agenciaOrigem() {
+            const agencia = usuarioAtual?.agencia || 'SISTEMA';
+            const cidade  = (usuarioAtual?.cidade_origem || '').trim().toUpperCase();
+            return cidade ? `${agencia}-${cidade}` : agencia;
+            // Ex: GM Curitiba → 'GM-CURITIBA' | PM estadual → 'PM'
+        }
+
+        function _confirmarForaDeArea() {
+            const cidadeAgencia = (usuarioAtual?.cidade_origem || '').trim().toUpperCase();
+            if(!cidadeAgencia) return true; // Estadual → sem restrição
+            const cidadeOco = (document.getElementById('endCidade')?.value || '').trim().toUpperCase();
+            if(!cidadeOco || cidadeOco === cidadeAgencia) return true; // Mesma cidade → ok
+            const agencia = usuarioAtual?.agencia || 'sua agência';
+            return confirm(
+                `⚠️ Registro fora da área de atuação\n\n` +
+                `Esta ocorrência está sendo registrada em ${cidadeOco}, ` +
+                `fora da área de atuação da ${agencia} de ${cidadeAgencia}.\n\n` +
+                `Deseja registrar assim mesmo?`
+            );
+        }
+
+        function _filtroAgencia() {
+            const ao = _agenciaOrigem();
+            return ao !== 'SISTEMA' ? `&agencia_origem=eq.${encodeURIComponent(ao)}` : '';
+        }
         
         function mascaraTelefone(el) {
             if(!el) return;
@@ -380,7 +510,46 @@ async function aplicarPui() {
             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoFormatado)}`, '_blank');
         }
 
-        let timeoutLog; function sugerirLogradouro(txt) { clearTimeout(timeoutLog); const box=document.getElementById('sugestoesLog'); const cid=document.getElementById('endCidade').value; if(txt.length<4||!cid){box.classList.add('hidden');return;} timeoutLog=setTimeout(async()=>{ try{const r=await fetch(`https://nominatim.openstreetmap.org/search?street=${txt}&city=${cid}&state=Parana&format=json&limit=5`);const d=await r.json();box.innerHTML='';if(d.length){box.classList.remove('hidden');d.forEach(i=>{const div=document.createElement('div');div.className='sugg-item';div.innerText=i.display_name.split(',')[0];div.onclick=()=>{document.getElementById('endLog').value=div.innerText;box.classList.add('hidden');};box.appendChild(div);});}}catch(e){} },500); }
+        let timeoutLog; 
+        function sugerirLogradouro(txt) { 
+            clearTimeout(timeoutLog); 
+            const box = document.getElementById('sugestoesLog'); 
+            const cid = document.getElementById('endCidade').value; 
+            if(txt.length < 3 || !cid) { 
+                box.classList.add('hidden'); 
+                return; 
+            } 
+            timeoutLog = setTimeout(async () => { 
+                try {
+                    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(txt + ", " + cid + ", Parana")}&osm_tag=highway&limit=5`);
+                    const d = await r.json();
+                    box.innerHTML = '';
+                    if(d.features && d.features.length) {
+                        const added = new Set();
+                        d.features.forEach(f => {
+                            const streetName = f.properties.name || f.properties.street;
+                            if(!streetName || added.has(streetName)) return;
+                            added.add(streetName);
+                            const div = document.createElement('div');
+                            div.className = 'sugg-item';
+                            div.innerText = streetName;
+                            div.onclick = () => {
+                                document.getElementById('endLog').value = div.innerText;
+                                box.classList.add('hidden');
+                                const numEl = document.getElementById('endNum');
+                                if(numEl) numEl.focus();
+                                if(typeof renderizarRadarLateral === 'function') renderizarRadarLateral();
+                            };
+                            box.appendChild(div);
+                        });
+                        if(added.size > 0) box.classList.remove('hidden');
+                        else box.classList.add('hidden');
+                    } else {
+                        box.classList.add('hidden');
+                    }
+                } catch(e) { box.classList.add('hidden'); } 
+            }, 300); 
+        }
 
         function _sugNorm(str) { return str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase() : ''; }
 
@@ -652,8 +821,16 @@ async function aplicarPui() {
                 natureza: document.getElementById('ocNatureza').value.toUpperCase(),
                 prioridade: calcularRisco(tags)
             };
+            // Verificar se ocorrência está fora da área de atuação
+            if(!_confirmarForaDeArea()) {
+                btn.innerText = destino==='TRIAGEM' ? 'TRIAGEM' : 'GERAR OCORRÊNCIA';
+                btn.disabled = false;
+                return;
+            }
+
             const payload = {
                 atendente_origem_id: usuarioAtual.id,
+                agencia_origem: _agenciaOrigem(),
                 status: destino === 'TRIAGEM' ? 'EM_TRIAGEM' : 'AGUARDANDO',
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
@@ -701,8 +878,16 @@ async function aplicarPui() {
                 natureza: document.getElementById('ocNatureza').value.toUpperCase(),
                 prioridade: calcularRisco(tags)
             };
+            // Verificar se ocorrência está fora da área de atuação
+            if(!_confirmarForaDeArea()) {
+                btn.innerText = 'GERAR E COMPLEMENTAR';
+                btn.disabled = false;
+                return;
+            }
+
             const payload = {
                 atendente_origem_id: usuarioAtual.id,
+                agencia_origem: _agenciaOrigem(),
                 status: 'AGUARDANDO',
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
@@ -823,8 +1008,12 @@ async function aplicarPui() {
                 natureza: document.getElementById('ocNatureza').value.toUpperCase(),
                 prioridade: calcularRisco(tags)
             };
+            // Verificar se ocorrência está fora da área de atuação
+            if(!_confirmarForaDeArea()) return;
+
             const payload = {
                 atendente_origem_id: usuarioAtual.id,
+                agencia_origem: _agenciaOrigem(),
                 status: 'ALERTA',
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
@@ -844,7 +1033,7 @@ async function aplicarPui() {
             tbAlertas.innerHTML=''; mobAlertas.innerHTML='';
             
             try {
-                const data = await api('tb_triagem', 'status=eq.ALERTA&order=criado_em.desc');
+                const data = await api('tb_triagem', `status=eq.ALERTA&order=criado_em.desc${_filtroAgencia()}`);
                 let ca=0;
 
                 data.forEach(d => {
@@ -941,7 +1130,7 @@ async function aplicarPui() {
             mb.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Carregando...</div>';
             
             try {
-                const d = await api('tb_triagem', 'status=eq.EM_TRIAGEM&order=criado_em.desc');
+                const d = await api('tb_triagem', `status=eq.EM_TRIAGEM&order=criado_em.desc${_filtroAgencia()}`);
                 tb.innerHTML = ''; mb.innerHTML = '';
                 if(countTriagem) countTriagem.innerText = d.length;
                 
@@ -1059,7 +1248,7 @@ async function aplicarPui() {
             tbWait.innerHTML=''; tbAct.innerHTML=''; mobWait.innerHTML=''; mobAct.innerHTML='';
             
             try {
-                const data = await api('tb_triagem', 'status=in.(AGUARDANDO,EM_ANDAMENTO)&order=criado_em.desc');
+                const data = await api('tb_triagem', `status=in.(AGUARDANDO,EM_ANDAMENTO)&order=criado_em.desc${_filtroAgencia()}`);
                 let cw=0, ca=0;
 
                 data.forEach(d => {
@@ -1273,17 +1462,44 @@ async function aplicarPui() {
         }
 
         // --- Chaves ---
-        function openNewKeyModal(){ document.getElementById('modalNewKey').style.display='flex'; }
+        function openNewKeyModal(){
+            const select = document.getElementById('nk_perfil');
+            select.innerHTML = '';
+            const opcoes = usuarioAtual.perfil_acesso === 'MODERADOR'
+                ? ['Atendente', 'Despachante', 'Admin']
+                : ['Atendente', 'Despachante'];
+            opcoes.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p; opt.text = p;
+                select.appendChild(opt);
+            });
+            // Limpar campo de cidade
+            const nkCidade = document.getElementById('nk_cidade');
+            if(nkCidade) nkCidade.value = '';
+            document.getElementById('modalNewKey').style.display = 'flex';
+        }
         async function criarChave(){
             const codigo = document.getElementById('nk_codigo').value || ('KEY-'+Math.random().toString(36).slice(2,8).toUpperCase());
             const val = document.getElementById('nk_validade').value;
             const perfil = document.getElementById('nk_perfil').value;
+            const cidadeRestricao = (document.getElementById('nk_cidade')?.value || '').trim().toUpperCase() || null;
             
-            const payload = { codigo: codigo, validade_horas: val, perfil_padrao: perfil, ativa: true };
+            const payload = {
+                codigo: codigo,
+                validade_horas: val,
+                perfil_padrao: perfil,
+                ativa: true,
+                criado_por_id: usuarioAtual.id,
+                criado_por_nome: usuarioAtual.nome_guerra || usuarioAtual.nome_completo || 'Sistema',
+                cidade_restricao: cidadeRestricao
+            };
             
-            try{ 
-                await api('tb_chaves_acesso','', 'POST', payload); 
-                fecharModal('modalNewKey'); alert('Chave criada'); carregarChaves(); 
+            try{
+                await api('tb_chaves_acesso','', 'POST', payload);
+                fecharModal('modalNewKey');
+                alert('Chave criada');
+                if(usuarioAtual.perfil_acesso === 'MODERADOR') carregarChavesModerador();
+                else carregarChaves();
             } catch(e){ alert('Erro ao criar chave: '+e.message); }
         }
 
@@ -2400,7 +2616,7 @@ async function carregarOcorrenciasParaRadar() {
     }
     
     try {
-        const data = await api('tb_triagem', 'status=in.("AGUARDANDO","EM_ANDAMENTO")&order=criado_em.desc');
+        const data = await api('tb_triagem', `status=in.("AGUARDANDO","EM_ANDAMENTO")&order=criado_em.desc${_filtroAgencia()}`);
         radarOcorrenciasMemoria = data || [];
         renderizarRadarLateral();
     } catch(e) {
@@ -2538,10 +2754,12 @@ setTimeout(() => {
         });
     }
 
-    // Ao iniciar o app, carregar o radar
-    carregarOcorrenciasParaRadar();
-    // Refresh dos dados no banco a cada 1 minuto
-    setInterval(carregarOcorrenciasParaRadar, 60000);
+    // Ao iniciar o app, carregar o radar (somente se usuário já está logado)
+    if(usuarioAtual) {
+        carregarOcorrenciasParaRadar();
+    }
+    // Refresh dos dados no banco a cada 1 minuto (com guard de sessão)
+    setInterval(() => { if(usuarioAtual) carregarOcorrenciasParaRadar(); }, 60000);
 }, 1000);
 // --- Função FAB Mobile ---
 function toggleRadarMobile() {
@@ -2552,3 +2770,228 @@ function toggleRadarMobile() {
         fab.classList.toggle('fab-active');
     }
 }
+
+// ===================================================================
+// ===== FUNÇÕES DO MODERADOR ========================================
+// ===================================================================
+
+let _todosUsuariosModerador = [];
+
+async function carregarUsuariosModerador() {
+    const tb = document.getElementById('modTabelaUsuarios');
+    if(!tb) return;
+    tb.innerHTML = '<tr><td colspan="7" style="padding:20px;color:var(--text-muted);text-align:center;"><i class="fas fa-spinner fa-spin"></i> Buscando...</td></tr>';
+
+    try {
+        const users = await api('tb_usuarios', 'select=*&order=criado_em.desc');
+        _todosUsuariosModerador = users;
+
+        // Calcular stats
+        const ativos   = users.filter(u => u.status_conta !== 'EXCLUIDO');
+        const total    = ativos.length;
+        const pend     = ativos.filter(u => u.status_conta === 'PENDENTE').length;
+        const admins   = ativos.filter(u => u.perfil_acesso === 'Admin' && u.status_conta === 'VALIDADO').length;
+        const bloq     = ativos.filter(u => u.status_conta === 'BLOQUEADO').length;
+
+        const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+        setEl('mod-stat-total', total);
+        setEl('mod-stat-pendentes', pend);
+        setEl('mod-stat-admins', admins);
+        setEl('mod-stat-bloqueados', bloq);
+
+        renderTabelaUsuariosModerador(users);
+        carregarChavesModerador();
+
+    } catch(e) {
+        tb.innerHTML = '<tr><td colspan="7" style="padding:20px;color:var(--danger);text-align:center;">Erro ao carregar usuários.</td></tr>';
+        console.error(e);
+    }
+}
+
+function renderTabelaUsuariosModerador(users) {
+    const tb = document.getElementById('modTabelaUsuarios');
+    if(!tb) return;
+    tb.innerHTML = '';
+
+    const lista = users.filter(u => u.status_conta !== 'EXCLUIDO');
+
+    if(!lista.length) {
+        tb.innerHTML = '<tr><td colspan="7" style="padding:20px;color:var(--text-muted);text-align:center;">Nenhum usuário encontrado.</td></tr>';
+        return;
+    }
+
+    lista.forEach(u => {
+        const corStatus = { 'VALIDADO': 'var(--success)', 'PENDENTE': 'var(--warning)', 'BLOQUEADO': 'var(--danger)' }[u.status_conta] || 'var(--text-muted)';
+        const nomeSeguro = (u.nome_guerra || '-').replace(/'/g, "\\'");
+        const perfilSeguro = (u.perfil_acesso || '').replace(/'/g, "\\'");
+
+        const btnAprovar  = u.status_conta !== 'VALIDADO'  ? `<button class="btn btn-sm btn-success" onclick="moderadorAprovarUsuario('${u.id}')" title="Aprovar">✅</button>` : '';
+        const btnBloquear = u.status_conta !== 'BLOQUEADO' ? `<button class="btn btn-sm btn-outline" onclick="moderadorBloquearUsuario('${u.id}')" title="Bloquear">🚫</button>` : '';
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border)';
+        tr.innerHTML = `
+            <td style="padding:10px;font-weight:600;">${u.nome_guerra || '-'}</td>
+            <td style="padding:10px;font-size:12px;">${u.agencia || '-'}</td>
+            <td style="padding:10px;font-size:12px;">${u.uf_origem || '-'}</td>
+            <td style="padding:10px;">${u.perfil_acesso || '-'}</td>
+            <td style="padding:10px;"><span style="color:${corStatus};font-weight:700;">${u.status_conta || '-'}</span></td>
+            <td style="padding:10px;font-size:12px;color:var(--text-muted);">${u.cpf_login || '-'}</td>
+            <td style="padding:10px;">
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    ${btnAprovar}
+                    ${btnBloquear}
+                    <button class="btn btn-sm btn-outline" onclick="moderadorAbrirAlterarPerfil('${u.id}','${perfilSeguro}','${nomeSeguro}')" title="Alterar Perfil">✏️</button>
+                    <button class="btn btn-sm btn-outline" onclick="moderadorExcluirUsuario('${u.id}')" title="Excluir">🗑️</button>
+                </div>
+            </td>`;
+        tb.appendChild(tr);
+    });
+}
+
+function filtrarUsuariosModerador() {
+    const status = document.getElementById('mod-filtro-status')?.value || 'TODOS';
+    const busca  = (document.getElementById('mod-filtro-busca')?.value || '').toLowerCase();
+
+    let lista = _todosUsuariosModerador;
+
+    if(status !== 'TODOS') {
+        lista = lista.filter(u => {
+            if(status === 'Admin') return u.perfil_acesso === 'Admin' && u.status_conta !== 'EXCLUIDO';
+            return u.status_conta === status;
+        });
+    }
+
+    if(busca) {
+        lista = lista.filter(u => {
+            const campos = [u.nome_guerra, u.nome_completo, u.agencia, u.cpf_login, u.perfil_acesso, u.uf_origem, u.cidade_origem].join(' ').toLowerCase();
+            return campos.includes(busca);
+        });
+    }
+
+    renderTabelaUsuariosModerador(lista);
+}
+
+async function moderadorAprovarUsuario(id) {
+    if(!confirm('Aprovar este usuário?')) return;
+    try {
+        await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { status_conta: 'VALIDADO' });
+        carregarUsuariosModerador();
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function moderadorBloquearUsuario(id) {
+    if(!confirm('Bloquear este usuário?')) return;
+    try {
+        await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { status_conta: 'BLOQUEADO' });
+        carregarUsuariosModerador();
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function moderadorExcluirUsuario(id) {
+    if(!confirm('Excluir este usuário? Esta ação não pode ser desfeita.')) return;
+    try {
+        await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { status_conta: 'EXCLUIDO' });
+        carregarUsuariosModerador();
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+function moderadorAbrirAlterarPerfil(id, perfilAtual, nomeGuerra) {
+    document.getElementById('ap_id').value    = id;
+    document.getElementById('ap_nome').value  = nomeGuerra;
+    document.getElementById('ap_perfil').value = perfilAtual;
+    document.getElementById('modalAlterarPerfil').style.display = 'flex';
+}
+
+async function moderadorSalvarAlterarPerfil() {
+    const id     = document.getElementById('ap_id').value;
+    const perfil = document.getElementById('ap_perfil').value;
+    if(!id || !perfil) return alert('Dados inválidos.');
+    try {
+        await api('tb_usuarios', `id=eq.${id}`, 'PATCH', { perfil_acesso: perfil });
+        fecharModal('modalAlterarPerfil');
+        alert('Perfil alterado com sucesso!');
+        carregarUsuariosModerador();
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function carregarChavesModerador() {
+    const tb = document.getElementById('modTabelaChaves');
+    if(!tb) return;
+    tb.innerHTML = '<tr><td colspan="6" style="padding:12px;color:var(--text-muted);text-align:center;"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+        const list = await api('tb_chaves_acesso', 'select=*&order=criado_em.desc');
+        tb.innerHTML = '';
+        if(!list.length) {
+            tb.innerHTML = '<tr><td colspan="6" style="padding:20px;color:var(--text-muted);text-align:center;">Nenhuma chave cadastrada.</td></tr>';
+            return;
+        }
+        list.forEach(k => {
+            const ativaLabel   = k.ativa ? '<span style="color:var(--success);">✅ Ativa</span>' : '<span style="color:var(--danger);">❌ Inativa</span>';
+            const val = Number(k.validade_horas);
+            const validadeLabel = val === 0 ? 'Permanente' : val >= 604800 ? '7 dias' : val >= 86400 ? '24 horas' : '1 hora';
+            tb.innerHTML += `<tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:10px;font-weight:600;">${k.codigo || '-'}</td>
+                <td style="padding:10px;">${k.perfil_padrao || '-'}</td>
+                <td style="padding:10px;font-size:12px;">${validadeLabel}</td>
+                <td style="padding:10px;font-size:12px;color:var(--text-muted);">${k.criado_por_nome || 'Sistema'}</td>
+                <td style="padding:10px;">${ativaLabel}</td>
+                <td style="padding:10px;">
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-sm btn-outline" onclick="moderadorAbrirEditarChave('${k.id}')" title="Editar">✏️</button>
+                        <button class="btn btn-sm btn-outline" onclick="moderadorExcluirChave('${k.id}')" title="Excluir">🗑️</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+    } catch(e) {
+        tb.innerHTML = '<tr><td colspan="6" style="padding:12px;color:var(--danger);text-align:center;">Erro ao carregar chaves.</td></tr>';
+        console.error(e);
+    }
+}
+
+async function moderadorAbrirEditarChave(id) {
+    try {
+        const res = await api('tb_chaves_acesso', `id=eq.${id}&select=*`);
+        if(!res.length) return;
+        const k = res[0];
+        document.getElementById('ek_id').value       = k.id;
+        document.getElementById('ek_codigo').value   = k.codigo || '';
+        document.getElementById('ek_perfil').value   = k.perfil_padrao || 'Atendente';
+        document.getElementById('ek_validade').value = String(k.validade_horas ?? 0);
+        document.getElementById('ek_ativa').checked  = k.ativa !== false;
+        document.getElementById('ek_cidade').value   = k.cidade_restricao || '';
+        document.getElementById('modalEditarChave').style.display = 'flex';
+    } catch(e) { alert('Erro ao buscar chave: ' + e.message); }
+}
+
+async function moderadorSalvarEdicaoChave() {
+    const id             = document.getElementById('ek_id').value;
+    const codigo         = document.getElementById('ek_codigo').value.trim().toUpperCase();
+    const perfil         = document.getElementById('ek_perfil').value;
+    const validade       = document.getElementById('ek_validade').value;
+    const ativa          = document.getElementById('ek_ativa').checked;
+    const cidadeRestricao = (document.getElementById('ek_cidade')?.value || '').trim().toUpperCase() || null;
+    if(!id || !codigo) return alert('Preencha o código da chave.');
+    try {
+        await api('tb_chaves_acesso', `id=eq.${id}`, 'PATCH', {
+            codigo,
+            perfil_padrao: perfil,
+            validade_horas: validade,
+            ativa,
+            cidade_restricao: cidadeRestricao
+        });
+        fecharModal('modalEditarChave');
+        alert('Chave atualizada!');
+        carregarChavesModerador();
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function moderadorExcluirChave(id) {
+    if(!confirm('Excluir esta chave de acesso?')) return;
+    try {
+        await api('tb_chaves_acesso', `id=eq.${id}`, 'DELETE');
+        carregarChavesModerador();
+    } catch(e) { alert('Erro: ' + e.message); }
+}
+
