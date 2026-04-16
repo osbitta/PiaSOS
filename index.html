@@ -41,6 +41,36 @@
                 <div class="modal-header"><h3>Solicitar Acesso</h3><i class="fas fa-times" onclick="fecharModal('modalCadastro')" style="cursor:pointer"></i></div>
                 <div class="modal-body">
                     <div style="margin-bottom:8px;"><label>Chave de Acesso (Opcional)</label><input type="text" id="cad_chave" placeholder="Se possuir uma chave"></div>
+                    
+                    <div style="margin-bottom:8px;">
+                        <label>Agência / Instituição</label>
+                        <select id="cad_agencia" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
+                            <option value="" disabled selected>Selecione a corporação...</option>
+                            <option value="PM">Polícia Militar</option>
+                            <option value="BM">Corpo de Bombeiros</option>
+                            <option value="GM">Guarda Municipal</option>
+                            <option value="SAMU">SAMU 192</option>
+                            <option value="DC">Defesa Civil</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:8px;">
+                        <div style="flex:1">
+                            <label>UF</label>
+                            <select id="cad_uf" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
+                                <option value="PR" selected>PR</option>
+                                <option value="SC">SC</option>
+                                <option value="SP">SP</option>
+                                <option value="RS">RS</option>
+                                <option value="MG">MG</option>
+                                <option value="RJ">RJ</option>
+                            </select>
+                        </div>
+                        <div style="flex:2">
+                            <label>Jurisdição Municipal</label>
+                            <input type="text" id="cad_cidade" placeholder="Vazio se Estadual">
+                        </div>
+                    </div>
+
                     <div style="margin-bottom:8px;"><label>Nome Completo</label><input type="text" id="cad_nome" required></div>
                     <div style="margin-bottom:8px;"><label>Nome de Guerra</label><input type="text" id="cad_guerra" required></div>
                     <div style="margin-bottom:8px;"><label>CPF</label><input type="text" id="cad_cpf" required placeholder="Somente números"></div>
@@ -53,7 +83,7 @@
 
     <div id="app-wrapper" class="hidden">
         <div class="navbar">
-            <div class="nav-brand"><img src="brasao.png" alt="Brasão" style="height: 26px; width: auto; margin-right: 8px; object-fit: contain;"><h2>Pia<span>SOS</span></h2></div>
+            <div class="nav-brand"><img src="brasao.png" alt="Brasão" style="height: 31px; width: auto; margin-right: 8px; object-fit: contain;"><h2>Pia<span style="color: var(--accent);">SOS</span></h2></div>
             <div class="nav-menu">
                 <div class="nav-item active" id="nav-atendimento" onclick="navegar('atendimento')"><i class="fas fa-phone-alt"></i> <span class="nav-text">ATENDIMENTO</span></div>
                 <div class="nav-item" id="nav-triagem" onclick="navegar('triagem')"><i class="fas fa-list-alt"></i> <span class="nav-text">TRIAGEM</span></div>
@@ -61,8 +91,9 @@
                 <div class="nav-item" id="nav-alertas" onclick="navegar('alertas')"><i class="fas fa-bullhorn"></i> <span class="nav-text">ALERTAS</span></div>
                 <div class="nav-item" id="nav-frota" onclick="navegar('frota')"><i class="fas fa-car"></i> <span class="nav-text">FROTA</span></div>
                 <div class="nav-item" id="nav-admin" onclick="navegar('admin')"><i class="fas fa-users-cog"></i> <span class="nav-text">ADMIN</span></div>
+                <div class="nav-item hidden" id="nav-moderador" onclick="navegar('moderador')"><i class="fas fa-shield-alt"></i> <span class="nav-text">MODERADOR</span></div>
             </div>
-            <div class="nav-user"><i id="themeToggleBtn" class="fas fa-moon" onclick="toggleTheme()" style="color:var(--text-muted); cursor:pointer; font-size:18px; margin-right:10px; transition:0.3s;" title="Alternar Tema"></i><div class="avatar" id="userAvatar">U</div><i class="fas fa-sign-out-alt" onclick="logout()" style="color:var(--text-muted); cursor:pointer;"></i></div>
+            <div class="nav-user"><i id="themeToggleBtn" class="fas fa-moon" onclick="toggleTheme()" style="color:var(--text-muted); cursor:pointer; font-size:18px; margin-right:10px; transition:0.3s;" title="Alternar Tema"></i><div class="avatar" id="userAvatar" onclick="abrirModalPerfil()" title="Meu Perfil">U</div><i class="fas fa-sign-out-alt" onclick="logout()" style="color:var(--text-muted); cursor:pointer;"></i></div>
         </div>
 
         <div class="main-content">
@@ -136,9 +167,9 @@
                                 </div>
                                 <div class="classif-group"><span class="classif-label">TEMPO DO ATO</span>
                                     <div class="check-grid">
-                                        <div class="option-box"><input type="radio" name="tempoAto" id="ta1" class="tag-radio" value="ESTÁ PARA OCORRER"><label for="ta1">VAI OCORRER</label></div>
                                         <div class="option-box"><input type="radio" name="tempoAto" id="ta2" class="tag-radio" value="EM ANDAMENTO"><label for="ta2">EM ANDAMENTO</label></div>
                                         <div class="option-box"><input type="radio" name="tempoAto" id="ta3" class="tag-radio" value="ACONTECEU A ALGUM TEMPO"><label for="ta3">JÁ OCORREU</label></div>
+                                        <div class="option-box"><input type="radio" name="tempoAto" id="ta1" class="tag-radio" value="ESTÁ PARA OCORRER"><label for="ta1">VAI OCORRER</label></div>
                                     </div>
                                 </div>
                                 </div>
@@ -442,7 +473,11 @@
                         <div class="modal-header"><h3>Nova Chave de Acesso</h3><i class="fas fa-times" onclick="fecharModal('modalNewKey')" style="cursor:pointer"></i></div>
                         <div class="modal-body">
                             <div style="margin-bottom:8px;"><label>Código</label><input id="nk_codigo" placeholder="TURMA-2026"></div>
-                            <div style="display:flex;gap:8px;"><div style="flex:1"><label>Validade</label><select id="nk_validade"><option value="3600">1 hora</option><option value="86400">24 horas</option><option value="604800">7 dias</option><option value="0">Permanente</option></select></div><div style="width:160px"><label>Perfil</label><select id="nk_perfil"><option>Atendente</option><option>Despachante</option><option>Admin</option></select></div></div>
+                            <div style="display:flex;gap:8px;margin-bottom:8px;"><div style="flex:1"><label>Validade</label><select id="nk_validade"><option value="3600">1 hora</option><option value="86400">24 horas</option><option value="604800">7 dias</option><option value="0">Permanente</option></select></div><div style="width:160px"><label>Perfil</label><select id="nk_perfil"><option>Atendente</option><option>Despachante</option><option>Admin</option></select></div></div>
+                            <div style="margin-bottom:4px;">
+                                <label>Restringir à Cidade <span style="font-weight:400; color:var(--text-muted); font-size:11px;">(opcional — para agências municipais)</span></label>
+                                <input id="nk_cidade" placeholder="Ex: CURITIBA" style="text-transform:uppercase;">
+                            </div>
                         </div>
                         <div class="modal-footer"><button class="btn btn-sm" onclick="criarChave()">Gerar</button><button class="btn btn-sm btn-outline" onclick="fecharModal('modalNewKey')">Cancelar</button></div>
                     </div>
@@ -494,6 +529,95 @@
                 </div>
 
             </div>
+
+            <!-- ===== VIEW MODERADOR ===== -->
+            <div id="view-moderador" class="hidden scroll-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2 style="font-size:18px;">🛡️ Painel do Moderador</h2>
+                    <button class="btn btn-sm btn-outline" onclick="carregarUsuariosModerador()"><i class="fas fa-sync"></i> Atualizar</button>
+                </div>
+
+                <!-- Stat Cards -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:15px;">
+                    <div class="section-box" style="text-align:center; padding:15px; margin:0;">
+                        <div style="font-size:28px; font-weight:700; color:var(--info);" id="mod-stat-total">-</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px; text-transform:uppercase;">Usuários Ativos</div>
+                    </div>
+                    <div class="section-box" style="text-align:center; padding:15px; margin:0;">
+                        <div style="font-size:28px; font-weight:700; color:var(--warning);" id="mod-stat-pendentes">-</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px; text-transform:uppercase;">Pendentes</div>
+                    </div>
+                    <div class="section-box" style="text-align:center; padding:15px; margin:0;">
+                        <div style="font-size:28px; font-weight:700; color:var(--success);" id="mod-stat-admins">-</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px; text-transform:uppercase;">Admins Ativos</div>
+                    </div>
+                    <div class="section-box" style="text-align:center; padding:15px; margin:0;">
+                        <div style="font-size:28px; font-weight:700; color:var(--danger);" id="mod-stat-bloqueados">-</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px; text-transform:uppercase;">Bloqueados</div>
+                    </div>
+                </div>
+
+                <!-- Seção: Usuários -->
+                <div class="section-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <div style="font-weight:700;">Gestão de Usuários</div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                            <select id="mod-filtro-status" onchange="filtrarUsuariosModerador()" style="padding:6px; background:var(--input-bg); border:1px solid var(--border); color:var(--text-light); border-radius:4px; font-size:12px;">
+                                <option value="TODOS">Todos</option>
+                                <option value="PENDENTE">⏳ Pendentes</option>
+                                <option value="VALIDADO">✅ Validados</option>
+                                <option value="Admin">🔑 Admins</option>
+                                <option value="BLOQUEADO">🚫 Bloqueados</option>
+                            </select>
+                            <input type="text" id="mod-filtro-busca" placeholder="🔍 Buscar..." oninput="filtrarUsuariosModerador()" style="padding:6px; background:var(--input-bg); border:1px solid var(--border); color:var(--text-light); border-radius:4px; font-size:12px; width:160px;">
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed;">
+                            <thead><tr style="border-bottom:1px solid var(--border);">
+                                <th style="padding:10px; text-align:left; width:17%;">Nome de Guerra</th>
+                                <th style="padding:10px; text-align:left; width:11%;">Agência</th>
+                                <th style="padding:10px; text-align:left; width:7%;">UF</th>
+                                <th style="padding:10px; text-align:left; width:14%;">Perfil</th>
+                                <th style="padding:10px; text-align:left; width:11%;">Status</th>
+                                <th style="padding:10px; text-align:left; width:15%;">CPF</th>
+                                <th style="padding:10px; text-align:left; width:25%;">Ações</th>
+                            </tr></thead>
+                            <tbody id="modTabelaUsuarios">
+                                <tr><td colspan="7" style="padding:20px; text-align:center; color:var(--text-muted);">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Seção: Chaves de Acesso -->
+                <div class="section-box" style="margin-top:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <div style="font-weight:700;">Chaves de Acesso (Global)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm btn-success" onclick="openNewKeyModal()"><i class="fas fa-plus"></i> Nova Chave</button>
+                            <button class="btn btn-sm btn-outline" onclick="carregarChavesModerador()"><i class="fas fa-sync"></i></button>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed;">
+                            <thead><tr style="border-bottom:1px solid var(--border);">
+                                <th style="padding:10px; text-align:left; width:22%;">Código</th>
+                                <th style="padding:10px; text-align:left; width:14%;">Perfil</th>
+                                <th style="padding:10px; text-align:left; width:13%;">Validade</th>
+                                <th style="padding:10px; text-align:left; width:20%;">Criado por</th>
+                                <th style="padding:10px; text-align:left; width:11%;">Ativa</th>
+                                <th style="padding:10px; text-align:left; width:20%;">Ações</th>
+                            </tr></thead>
+                            <tbody id="modTabelaChaves">
+                                <tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== FIM VIEW MODERADOR ===== -->
+
         </div>
         
     </div>
@@ -616,141 +740,4 @@
                 </div>
                 <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
                     <div class="drawer-section-title"><i class="fas fa-history"></i> Descrição</div>
-                    <div id="mo-historico" style="font-size:12px; line-height:1.5; color:var(--text-light);">Nenhuma informação</div>
-                </div>
-                <div id="mo-recursos-container" style="display:none;">
-                    <div class="drawer-section-title"><i class="fas fa-car"></i> Recursos</div>
-                    <div id="mo-recursos" style="font-size:11px;">Nenhum recurso</div>
-                </div>
-            </div>
-            <div class="modal-footer" style="display:flex; gap:10px;">
-                <button class="btn" id="mo-btn-complementar" onclick="abrirComplementoMonitoramento()" style="width: auto; background: var(--secondary); color: white;">COMPLEMENTAR</button>
-                <button class="btn btn-info" id="mo-btn-editar" onclick="editarEndereco()"><i class="fas fa-pen"></i> Editar Endereço</button>
-                <button class="btn btn-success" id="mo-btn-acao" onclick="abrirSelecaoFrotaModal(idOcorrenciaAberta, 'PRINCIPAL')">Despachar</button>
-                <button class="btn btn-danger" id="mo-btn-finalizar" onclick="finalizarOcorrenciaModal(idOcorrenciaAberta)"><i class="fas fa-flag"></i> Finalizar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalAlerta" class="modal-overlay" style="z-index:250;">
-        <div class="modal-content" style="max-width:700px; max-height:85vh;">
-            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <div style="display: flex; align-items: center; gap:15px; margin-bottom:8px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <h3 id="ma-natureza" style="margin:0; font-size:18px;">Alerta</h3>
-                            <span style="background:#8b5cf6; color:white; padding:2px 8px; border-radius:12px; font-size:12px;">ALERTA</span>
-                        </div>
-                        <div id="ma-criado-em" style="font-size:12px; color:var(--text-muted); font-weight:500;">Gerado em: --</div>
-                    </div>
-                    <div style="display:flex; gap:15px; font-size:11px; color:var(--text-muted);">
-                        <span id="ma-id">ID: --</span>
-                        <span id="ma-timer">00:00</span>
-                    </div>
-                    <div id="ma-tags" style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;"></div>
-                </div>
-                <div style="display:flex; gap:15px; align-items:center;">
-                    <i class="fas fa-copy" id="ma-iconeCopiarSade" title="Copiar p/ SADE" style="cursor:pointer; font-size:18px; color:var(--text-muted); transition:0.2s;"></i>
-                    <i class="fab fa-whatsapp" onclick="compartilharWhatsApp(idAlertaAberto)" title="Compartilhar WhatsApp" style="cursor:pointer; font-size:18px; color:var(--text-muted); transition:0.2s;"></i>
-                    <i class="fas fa-times" onclick="fecharModal('modalAlerta')" style="cursor:pointer; font-size:20px; color:var(--text-muted);"></i>
-                </div>
-            </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:15px;">
-                <div class="modal-grid-responsive" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
-                    <div class="drawer-section-title"><i class="fas fa-map-pin"></i> Local</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                        <div id="ma-endereco" style="font-size:12px; line-height:1.4;">Endereço</div>
-                        <button class="btn btn-sm btn-outline" id="ma-btn-mapa" title="Abrir no Mapa" style="padding:10px;"><i class="fas fa-map-marked-alt" style="font-size:16px;"></i></button>
-                    </div>
-                </div>
-                <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
-                    <div class="drawer-section-title"><i class="fas fa-user"></i> Solicitante</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                        <div>
-                            <div id="ma-nome" style="font-size:12px;">Nome: --</div>
-                            <div id="ma-telefone" style="font-size:12px;">Tel: --</div>
-                        </div>
-                        <a href="#" id="ma-btn-ligar" title="Ligar" style="color: var(--text-muted); font-size: 16px; margin-left: 8px; text-decoration: none; transition: 0.2s;"><i class="fas fa-phone"></i></a>
-                    </div>
-                </div>
-                </div>
-                <div style="padding:12px; background:var(--bg-header); border:1px solid var(--border); border-radius:6px;">
-                    <div class="drawer-section-title"><i class="fas fa-history"></i> Descrição</div>
-                    <div id="ma-historico" style="font-size:12px; line-height:1.5; color:var(--text-light);">Nenhuma informação</div>
-                </div>
-            </div>
-            <div class="modal-footer" style="display:flex; gap:10px;">
-                <button class="btn" onclick="abrirComplementoMonitoramento()" style="width: auto; background: var(--secondary); color: white;">COMPLEMENTAR</button>
-                <button class="btn btn-info" onclick="editarEndereco()"><i class="fas fa-pen"></i> Editar Endereço</button>
-                <button class="btn btn-success" onclick="promoverAlertaFromModal(idAlertaAberto)"><i class="fas fa-level-up-alt"></i> PROMOVER</button>
-                <button class="btn btn-danger" onclick="finalizarOcorrenciaModal(idAlertaAberto)"><i class="fas fa-flag"></i> Finalizar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalFinalizacao" class="modal-overlay" style="z-index: 260;">
-        <div class="modal-content" style="max-width:400px;">
-            <div class="modal-header">
-                <h3 style="margin:0;">Finalizar Ocorrência</h3>
-                <i class="fas fa-times" onclick="fecharModal('modalFinalizacao')" style="cursor:pointer; font-size:18px; color:var(--text-muted);"></i>
-            </div>
-            <div class="modal-body">
-                <div class="input-wrapper" id="wrapper-mf-bo">
-                    <label>Nº BO / Protocolo</label>
-                    <input type="text" id="mf-bo" placeholder="Ex: 12345/2026">
-                </div>
-                <div class="input-wrapper">
-                    <label>Desfecho / Observações Finais</label>
-                    <textarea id="mf-observacoes" placeholder="Descreva o desfecho da ocorrência..." style="height:120px; resize:none;"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer" style="display:flex; gap:10px;">
-                <button class="btn btn-danger" onclick="fecharModal('modalFinalizacao')">Cancelar</button>
-                <button class="btn btn-success" onclick="confirmarFinalizacao()">Confirmar Finalização</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalSelecaoFrota" class="modal-overlay" style="z-index:260;">
-        <div class="modal-content" style="max-width:500px;">
-            <div class="modal-header">
-                <h3 style="margin:0;">Selecionar Viatura</h3>
-                <i class="fas fa-times" onclick="fecharModal('modalSelecaoFrota')" style="cursor:pointer; font-size:18px; color:var(--text-muted);"></i>
-            </div>
-            <div class="modal-body" style="max-height:400px; overflow-y:auto;">
-                <div id="msfLista" style="display:flex; flex-direction:column; gap:10px;"></div>
-            </div>
-        </div>
-    </div>
-
-<script src="js/dados_parana.js"></script>
-<script src="js/main.js"></script>
-
-<div id="modalConfigPui" class="modal-overlay" style="z-index: 250;">
-    <div class="modal-content" style="max-width:500px;">
-        <div class="modal-header">
-            <h3><i class="fas fa-cog"></i> Configuração PUI (Groq)</h3>
-            <i class="fas fa-times" onclick="fecharModal('modalConfigPui')" style="cursor:pointer;"></i>
-        </div>
-        <div class="modal-body">
-            <label>Chave API (Groq)</label>
-            <div class="input-wrapper" style="margin-bottom:5px;">
-                <i class="fas fa-key icon-left"></i>
-                <input type="password" id="puiApiKey" placeholder="gsk_...">
-            </div>
-            <div style="font-size:11px; margin-bottom:15px; text-align:right;">
-                <a href="https://console.groq.com/keys" target="_blank" style="color:var(--info); text-decoration:none;">🔗 Gerar chave gratuita no Groq</a>
-            </div>
-            <label>Prompt do Sistema (Instrução da IA)</label>
-            <textarea id="puiPrompt" rows="5" style="width:100%; background:var(--bg-input); color:var(--text-light); border:1px solid var(--border); border-radius:4px; padding:10px; font-size:12px; resize:vertical;"></textarea>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-sm btn-outline" onclick="fecharModal('modalConfigPui')">CANCELAR</button>
-            <button type="button" class="btn btn-sm btn-success" onclick="salvarConfigPui()">SALVAR CONFIGURAÇÃO</button>
-        </div>
-    </div>
-</div>
-
-</body>
-</html>
+                    <div 
