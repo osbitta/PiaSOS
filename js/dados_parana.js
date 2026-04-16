@@ -1,5 +1,6 @@
 // Base Gerada Automaticamente pelo Script Gerador IBGE
 // Contém todas as 399 cidades do Paraná padronizadas e limpas
+// Cobertura detalhada: Top 30 + RMC completa + Litoral completo
 
 const localidadesPR = {
     "ABATIA": [
@@ -15,7 +16,18 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "ALMIRANTE TAMANDARE": [
+        "AREIAS",
+        "CACHOEIRA",
+        "CAMPO PEQUENO",
         "CENTRO",
+        "JARDIM ALVORADA",
+        "JARDIM COLONIAL",
+        "JARDIM MONTE SANTO",
+        "JARDIM PARAISO",
+        "SAO VENANCIO",
+        "TRANQUEIRA",
+        "VILA SANTA TEREZINHA",
+        "VILA SAO PEDRO",
         "ZONA RURAL"
     ],
     "ALTAMIRA DO PARANA": [
@@ -60,6 +72,8 @@ const localidadesPR = {
     ],
     "ANTONINA": [
         "CENTRO",
+        "PORTINHO",
+        "PONTA DA PITA",
         "ZONA RURAL"
     ],
     "ANTONIO OLINTO": [
@@ -68,10 +82,31 @@ const localidadesPR = {
     ],
     "APUCARANA": [
         "CENTRO",
+        "JARDIM AEROPORTO",
+        "JARDIM AMERICA",
+        "JARDIM DIAMANTINA",
+        "JARDIM ELDORADO",
+        "JARDIM EUROPA",
+        "JARDIM FLAMINGOS",
+        "JARDIM MARISSOL",
+        "NUCLEO HABITACIONAL ADRIANO CORREIA",
+        "NUCLEO HABITACIONAL PAPA JOAO XXIII",
+        "VILA OPERARIA",
+        "VILA SAO CARLOS",
         "ZONA RURAL"
     ],
     "ARAPONGAS": [
         "CENTRO",
+        "CONJUNTO FLAMINGOS",
+        "CONJUNTO PALMARES",
+        "JARDIM AEROPORTO",
+        "JARDIM BANDEIRANTES",
+        "JARDIM CARAVELLE",
+        "JARDIM IGUACU",
+        "JARDIM PRIMAVERA",
+        "JARDIM SAO CRISTOVAO",
+        "JARDIM SAO FRANCISCO",
+        "VILA INDUSTRIAL",
         "ZONA RURAL"
     ],
     "ARAPOTI": [
@@ -87,7 +122,18 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "ARAUCARIA": [
+        "CACHOEIRA",
+        "CAMPINA DA BARRA",
+        "CAPELA VELHA",
         "CENTRO",
+        "CHAPADA",
+        "COSTEIRA",
+        "FAZENDA VELHA",
+        "IGUACU",
+        "PASSAUNA",
+        "PORTO DAS LARANJEIRAS",
+        "THOMAZ COELHO",
+        "TINDIQUERA",
         "ZONA RURAL"
     ],
     "ARIRANHA DO IVAI": [
@@ -208,6 +254,15 @@ const localidadesPR = {
     ],
     "CAMBE": [
         "CENTRO",
+        "CONJUNTO HABITACIONAL ANA ROSA",
+        "JARDIM ALVORADA",
+        "JARDIM ANA ROSA",
+        "JARDIM MONTECATINI",
+        "JARDIM NOVO BANDEIRANTES",
+        "JARDIM SANTO AMARO",
+        "MONTE CARLO",
+        "PARQUE RESIDENCIAL BELA VISTA",
+        "SAN FERNANDO",
         "ZONA RURAL"
     ],
     "CAMBIRA": [
@@ -224,6 +279,11 @@ const localidadesPR = {
     ],
     "CAMPINA GRANDE DO SUL": [
         "CENTRO",
+        "DISTRITO INDUSTRIAL",
+        "JARDIM ARAGATUBA",
+        "JARDIM GRACIOSA",
+        "JARDIM PAULISTA",
+        "RECANTO VERDE",
         "ZONA RURAL"
     ],
     "CAMPO BONITO": [
@@ -235,15 +295,41 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "CAMPO LARGO": [
+        "BATEIAS",
         "CENTRO",
+        "CRISTO REI",
+        "FERRARIA",
+        "ITAQUI",
+        "JARDIM DAS ACACIAS",
+        "JARDIM SANTO ANTONIO",
+        "SANTO ANTONIO",
+        "SAO SILVESTRE",
+        "TRES CORREGOS",
         "ZONA RURAL"
     ],
     "CAMPO MAGRO": [
+        "AGUA BOA",
+        "BOA VISTA",
         "CENTRO",
+        "JARDIM BOM PASTOR",
+        "JARDIM NOVOS HORIZONTES",
+        "JARDIM VENEZA",
+        "JURUQUI",
+        "LAGOA DA PEDRA",
+        "PASSAUNA",
+        "PIONEIRO",
         "ZONA RURAL"
     ],
     "CAMPO MOURAO": [
         "CENTRO",
+        "CIDADE NOVA",
+        "COHAPAR",
+        "CONJUNTO PARIGOT DE SOUZA",
+        "JARDIM AMERICA",
+        "JARDIM CURITIBA",
+        "JARDIM TROPICAL",
+        "LAR PARANA",
+        "PARQUE INDUSTRIAL",
         "ZONA RURAL"
     ],
     "CANDIDO DE ABREU": [
@@ -284,25 +370,32 @@ const localidadesPR = {
         "ESMERALDA",
         "FACULDADE",
         "FLORESTA",
-        "GUARUJÁ",
+        "GUARUJA",
         "INTERLAGOS",
         "MARIA LUIZA",
         "MORUMBI",
         "NEVA",
         "PACAEMBU",
-        "PARQUE SÃO PAULO",
+        "PARQUE SAO PAULO",
         "PERIOLO",
         "PIONEIROS CATARINENSES",
         "PRESIDENTE",
         "SANTA CRUZ",
         "SANTA FELICIDADE",
         "SANTOS DUMONT",
-        "SÃO CRISTÓVÃO",
+        "SAO CRISTOVAO",
         "TROPICAL",
         "ZONA RURAL"
     ],
     "CASTRO": [
+        "AREA RURAL",
+        "CARAMBEIZINHO",
         "CENTRO",
+        "JARDIM DAS ACACIAS",
+        "JARDIM MONSENHOR MUCCIOLO",
+        "LAGOA",
+        "LIMEIRA",
+        "LAGOINHA",
         "ZONA RURAL"
     ],
     "CATANDUVAS": [
@@ -327,6 +420,17 @@ const localidadesPR = {
     ],
     "CIANORTE": [
         "CENTRO",
+        "CONJUNTO MORADIAS MARSELHA",
+        "JARDIM AMERICA",
+        "JARDIM PARIS",
+        "JARDIM UNIVERSAL",
+        "PARQUE INDUSTRIAL",
+        "VILA OPERARIA",
+        "ZONA 01",
+        "ZONA 02",
+        "ZONA 03",
+        "ZONA 05",
+        "ZONA 06",
         "ZONA RURAL"
     ],
     "CIDADE GAUCHA": [
@@ -341,16 +445,17 @@ const localidadesPR = {
         "ATUBA",
         "CAMPO PEQUENO",
         "CENTRO",
-        "FÁTIMA",
+        "FATIMA",
         "GUARAITUBA",
-        "MARACANÃ",
-        "MAUÁ",
+        "MARACANA",
+        "MAUA",
+        "MONTE CASTELO",
         "MONZA",
         "OSASCO",
         "PALOMA",
         "RIO VERDE",
-        "ROÇA GRANDE",
-        "SÃO GABRIEL",
+        "ROCA GRANDE",
+        "SAO GABRIEL",
         "ZONA RURAL"
     ],
     "COLORADO": [
@@ -410,39 +515,77 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "CURITIBA": [
-        "ÁGUA VERDE",
-        "ALTO BOQUEIRÃO",
+        "ABRANCHES",
+        "AGUA VERDE",
+        "AHU",
+        "ALTO BOQUEIRAO",
+        "ALTO DA GLORIA",
+        "ALTO DA RUA XV",
         "ATUBA",
+        "AUGUSTA",
+        "BACACHERI",
         "BARREIRINHA",
         "BATEL",
         "BIGORRILHO",
         "BOA VISTA",
-        "BOQUEIRÃO",
+        "BOQUEIRAO",
+        "BUTIATUVINHA",
+        "CABRAL",
+        "CACHOEIRA",
         "CAJURU",
         "CAMPINA DO SIQUEIRA",
-        "CAPÃO RASO",
+        "CAMPO COMPRIDO",
+        "CAMPO DE SANTANA",
+        "CAPAO DA IMBUIA",
+        "CAPAO RASO",
+        "CASCATINHA",
         "CENTRO",
+        "CENTRO CIVICO",
         "CIDADE INDUSTRIAL",
+        "CRISTO REI",
         "FANNY",
         "FAZENDINHA",
-        "GUAÍRA",
-        "LINDÓIA",
-        "MERCÊS",
+        "GUABIROTUBA",
+        "GUAIRA",
+        "HAUER",
+        "HUGO LANGE",
+        "JARDIM BOTANICO",
+        "JARDIM DAS AMERICAS",
+        "JARDIM SOCIAL",
+        "JUVEVE",
+        "LAMENHA PEQUENA",
+        "LINDOIA",
+        "MERCES",
+        "MOSSUNGUE",
         "NOVO MUNDO",
+        "ORLEANS",
         "PAROLIN",
+        "PILARZINHO",
         "PINHEIRINHO",
-        "PORTÃO",
+        "PORTAO",
         "PRADO VELHO",
-        "REBOUÇAS",
-        "SANTA CÂNDIDA",
+        "REBOUCAS",
+        "RIVIERA",
+        "SANTA CANDIDA",
         "SANTA FELICIDADE",
-        "SANTO INÁCIO",
-        "SEMINÁRIO",
-        "SÍTIO CERCADO",
-        "TARUMÃ",
+        "SANTA QUITERIA",
+        "SANTO INACIO",
+        "SAO BRAZ",
+        "SAO FRANCISCO",
+        "SAO JOAO",
+        "SAO LOURENCO",
+        "SAO MIGUEL",
+        "SAO PEDRO",
+        "SEMINARIO",
+        "SITIO CERCADO",
+        "TABOAO",
+        "TARUMA",
         "TATUQUARA",
         "TINGUI",
         "UBERABA",
+        "UMBARA",
+        "VILA IZABEL",
+        "VISTA ALEGRE",
         "XAXIM",
         "ZONA RURAL"
     ],
@@ -503,7 +646,17 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "FAZENDA RIO GRANDE": [
+        "BOSQUE SANTO ANTONIO",
         "CENTRO",
+        "ESTADOS",
+        "EUCALIPTOS",
+        "GRALHA AZUL",
+        "IGUACU",
+        "NACOES",
+        "PIONEIROS",
+        "SANTA TEREZINHA",
+        "SAO SEBASTIAO",
+        "VENEZA",
         "ZONA RURAL"
     ],
     "FENIX": [
@@ -543,7 +696,24 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "FOZ DO IGUACU": [
+        "BELVEDERE",
+        "CAMPOS DO IGUACU",
         "CENTRO",
+        "ITAIPU A",
+        "ITAIPU B",
+        "ITAIPU C",
+        "JARDIM SAO PAULO",
+        "MORUMBI",
+        "PARQUE PRESIDENTE",
+        "PONTE SEGUI",
+        "PORTAL DA FOZ",
+        "PORTO MEIRA",
+        "PROFILURB",
+        "TRES LAGOAS",
+        "VILA A",
+        "VILA B",
+        "VILA C",
+        "VILA YOLANDA",
         "ZONA RURAL"
     ],
     "FRANCISCO ALVES": [
@@ -551,7 +721,19 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "FRANCISCO BELTRAO": [
+        "AGUA BRANCA",
+        "ALVORADA",
         "CENTRO",
+        "CRISTO REI",
+        "INDUSTRIAL",
+        "JARDIM FLORESTA",
+        "JARDIM ITARARE",
+        "JARDIM SEMINARIO",
+        "LUTHER KING",
+        "PINHEIRINHO",
+        "SAO CRISTOVAO",
+        "SAO MIGUEL",
+        "VILA NOVA",
         "ZONA RURAL"
     ],
     "FOZ DO JORDAO": [
@@ -610,10 +792,12 @@ const localidadesPR = {
         "ALTO DA XV",
         "BATEL",
         "BONSUCESSO",
-        "BOQUEIRÃO",
+        "BOQUEIRAO",
         "CENTRO",
         "CONRADINHO",
+        "DOS ESTADOS",
         "INDUSTRIAL",
+        "JARDIM DAS AMERICAS",
         "MORRO ALTO",
         "PRIMAVERA",
         "SANTA CRUZ",
@@ -627,7 +811,15 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "GUARATUBA": [
+        "BOA VISTA",
+        "BREJATUBA",
+        "CAIEIRAS",
         "CENTRO",
+        "COHAPAR",
+        "COROADOS",
+        "MEREDAS",
+        "NEREIDAS",
+        "PICARRAS",
         "ZONA RURAL"
     ],
     "HONORIO SERPA": [
@@ -720,6 +912,7 @@ const localidadesPR = {
     ],
     "ITAPERUCU": [
         "CENTRO",
+        "JARDIM DAIANA",
         "ZONA RURAL"
     ],
     "ITAUNA DO SUL": [
@@ -811,7 +1004,14 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "LAPA": [
+        "AGUA AZUL",
+        "CAMPINA",
         "CENTRO",
+        "COLONIA MUNICIPAL",
+        "COLONIA RESTINGA",
+        "CONTESTADO",
+        "NUCLEO LEITEIRO",
+        "SANTO AMARO",
         "ZONA RURAL"
     ],
     "LARANJAL": [
@@ -846,21 +1046,31 @@ const localidadesPR = {
         "AEROPORTO",
         "ANTARES",
         "BANDEIRANTES",
+        "BOM RETIRO",
         "CAFEZAL",
+        "CATUAI",
         "CENTRO",
         "CINCO CONJUNTOS",
+        "COLISEU",
         "ERNANI",
         "GLEBA PALHANO",
         "GUANABARA",
-        "IGAPÓ",
-        "LEONOR",
-        "LINDÓIA",
+        "HIGIENOPOLIS",
+        "IGAPO",
+        "JAMAICA",
+        "JARDIM LEONOR",
+        "LINDOIA",
+        "OURO BRANCO",
         "OURO VERDE",
         "PARIGOT DE SOUZA",
+        "PEROBAL",
         "PIZA",
         "QUEBEC",
-        "SHANGRI-LÁ",
-        "UNIÃO DA VITÓRIA",
+        "SABARA",
+        "SANTA MONICA",
+        "SHANGRI-LA",
+        "UNIAO DA VITORIA",
+        "VIVENDAS DO ARVOREDO",
         "VIVI XAVIER",
         "ZONA RURAL"
     ],
@@ -894,6 +1104,7 @@ const localidadesPR = {
     ],
     "MANDIRITUBA": [
         "CENTRO",
+        "AREIA BRANCA DOS ASSIS",
         "ZONA RURAL"
     ],
     "MANFRINOPOLIS": [
@@ -934,6 +1145,26 @@ const localidadesPR = {
     ],
     "MARINGA": [
         "CENTRO",
+        "JARDIM ALVORADA",
+        "JARDIM PARIS",
+        "JARDIM REAL",
+        "MANDACARU",
+        "NEY BRAGA",
+        "NOVO CENTRO",
+        "PARQUE DAS GREVILEAS",
+        "PARQUE ITAIPU",
+        "PARQUE RESIDENCIAL PATRICIA",
+        "SANTA FELICIDADE",
+        "SUMARE",
+        "VILA MORANGUEIRA",
+        "VILA OPERARIA",
+        "ZONA 01",
+        "ZONA 02",
+        "ZONA 03",
+        "ZONA 04",
+        "ZONA 05",
+        "ZONA 06",
+        "ZONA 07",
         "ZONA RURAL"
     ],
     "MARIOPOLIS": [
@@ -961,7 +1192,19 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "MATINHOS": [
+        "ALBATROZ",
+        "BELA VISTA",
+        "BETARAS",
+        "BOM RETIRO",
+        "CAIOBA",
         "CENTRO",
+        "GAIVOTAS",
+        "PRAIA GRANDE",
+        "PRAIA MANSA",
+        "RIO DA ONCA",
+        "RIVIERA",
+        "SERTAOZINHO",
+        "TABULEIRO",
         "ZONA RURAL"
     ],
     "MATO RICO": [
@@ -998,6 +1241,7 @@ const localidadesPR = {
     ],
     "MORRETES": [
         "CENTRO",
+        "PORTO DE CIMA",
         "ZONA RURAL"
     ],
     "MUNHOZ DE MELO": [
@@ -1109,7 +1353,27 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "PARANAGUA": [
-        "CENTRO",
+        "29 DE JULHO",
+        "CAMPO GRANDE",
+        "CENTRO HISTORICO",
+        "COSTEIRA",
+        "ELDORADO",
+        "EMBOGUACU",
+        "ESTRADINHA",
+        "INDUSTRIAL",
+        "JARDIM AMERICA",
+        "JARDIM GUARAITUBA",
+        "JARDIM IGUACU",
+        "JARDIM PARANA",
+        "LEBLON",
+        "OCEANIA",
+        "PALMITAL",
+        "PARQUE AGARI",
+        "PORTO DOS PADRES",
+        "ROCIO",
+        "TUIUTI",
+        "VILA CRUZEIRO",
+        "VILA GUARANI",
         "ZONA RURAL"
     ],
     "PARANAPOEMA": [
@@ -1125,7 +1389,22 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "PATO BRANCO": [
+        "BORTOT",
         "CENTRO",
+        "FRARON",
+        "INDUSTRIAL",
+        "JARDIM PRIMAVERA",
+        "LA SALLE",
+        "MENINO DEUS",
+        "MORUMBI",
+        "PAGNONCELLI",
+        "PARZIANELLO",
+        "PLANALTO",
+        "SAO CRISTOVAO",
+        "SAO FRANCISCO",
+        "SAO JOAO",
+        "SUDOESTE",
+        "VENEZA",
         "ZONA RURAL"
     ],
     "PAULA FREITAS": [
@@ -1157,7 +1436,19 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "PINHAIS": [
+        "ALPHAVILLE GRACIOSA",
+        "ALTO ATUBA",
+        "ATUBA",
         "CENTRO",
+        "EMILIANO PERNETA",
+        "ESTANCIA PINHAIS",
+        "JARDIM AMELIA",
+        "JARDIM CLAUDIA",
+        "JARDIM PEDRO DEMETERCO",
+        "PALMITAL",
+        "PINEVILLE",
+        "VARGEM GRANDE",
+        "WEISSOPOLIS",
         "ZONA RURAL"
     ],
     "PINHALAO": [
@@ -1177,7 +1468,19 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "PIRAQUARA": [
+        "AGUAS CLARAS",
+        "BORDA DO CAMPO",
         "CENTRO",
+        "GUARITUBA",
+        "JARDIM ALTEROSA",
+        "JARDIM BELA VISTA",
+        "JARDIM PRIMAVERA",
+        "JARDIM SANTA HELENA",
+        "PLANTA DEODORO",
+        "PLANTA SANTA LUZIA",
+        "SAO ROQUE",
+        "VILA FRANCA",
+        "VILA MACEDO",
         "ZONA RURAL"
     ],
     "PITANGA": [
@@ -1198,23 +1501,30 @@ const localidadesPR = {
     ],
     "PONTA GROSSA": [
         "BOA VISTA",
-        "CARÁ-CARÁ",
+        "CARA-CARA",
         "CENTRO",
         "CHAPADA",
+        "COLONIA DONA LUIZA",
         "CONTORNO",
         "ESTRELA",
         "JARDIM CARVALHO",
         "NEVES",
-        "NOVA RÚSSIA",
+        "NOVA RUSSIA",
         "OFICINAS",
         "OLARIAS",
-        "ÓRFÃS",
+        "ORFAS",
         "RONDA",
         "UVARANAS",
         "ZONA RURAL"
     ],
     "PONTAL DO PARANA": [
         "CENTRO",
+        "COLONIA PEREIRA",
+        "GUARAGUACU",
+        "IPANEMA",
+        "PONTAL DO SUL",
+        "PRAIA DO LESTE",
+        "SHANGRI-LA",
         "ZONA RURAL"
     ],
     "PORECATU": [
@@ -1266,7 +1576,10 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "QUATRO BARRAS": [
+        "BOM JESUS",
         "CENTRO",
+        "JARDIM MENINA",
+        "SAO PEDRO",
         "ZONA RURAL"
     ],
     "QUATRO PONTES": [
@@ -1347,14 +1660,28 @@ const localidadesPR = {
     ],
     "RIO BRANCO DO SUL": [
         "CENTRO",
+        "MEDIANEIRA",
+        "VILA BARRO BRANCO",
         "ZONA RURAL"
     ],
     "RIO NEGRO": [
+        "BOM JESUS",
         "CENTRO",
+        "LAGEADINHO",
+        "SEMINARIO",
+        "VILA GUILHERME",
+        "VILA NOVA",
         "ZONA RURAL"
     ],
     "ROLANDIA": [
+        "CARAVELLE",
         "CENTRO",
+        "CENTRO INDUSTRIAL",
+        "JARDIM BANDEIRANTES",
+        "JARDIM JACARANDA",
+        "JARDIM NOVO HORIZONTE",
+        "JARDIM SAN FERNANDO",
+        "VILA OLIVEIRA",
         "ZONA RURAL"
     ],
     "RONCADOR": [
@@ -1510,7 +1837,22 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "SAO JOSE DOS PINHAIS": [
+        "AFONSO PENA",
+        "ARISTOCRATA",
+        "BORDA DO CAMPO",
         "CENTRO",
+        "CIDADE JARDIM",
+        "COLONIA RIO GRANDE",
+        "COSTEIRA",
+        "CRUZEIRO",
+        "GUATUPE",
+        "INA",
+        "IPE",
+        "OURO FINO",
+        "PEDRO MORO",
+        "RIO PEQUENO",
+        "SAO DOMINGOS",
+        "SAO MARCOS",
         "ZONA RURAL"
     ],
     "SAO MANOEL DO PARANA": [
@@ -1551,6 +1893,13 @@ const localidadesPR = {
     ],
     "SARANDI": [
         "CENTRO",
+        "CONJUNTO VALE AZUL",
+        "JARDIM AMERICA",
+        "JARDIM INDEPENDENCIA",
+        "JARDIM PANORAMA",
+        "JARDIM UNIVERSAL",
+        "NOVA ALIANCA",
+        "PARQUE INDUSTRIAL",
         "ZONA RURAL"
     ],
     "SAUDADE DO IGUACU": [
@@ -1602,7 +1951,16 @@ const localidadesPR = {
         "ZONA RURAL"
     ],
     "TELEMACO BORBA": [
+        "ALTO DAS OLIVEIRAS",
+        "BOA VISTA",
         "CENTRO",
+        "INDUSTRIAL",
+        "JARDIM AEROPORTO",
+        "JARDIM BELA VISTA",
+        "MONTE ALEGRE",
+        "SANTA RITA",
+        "SAO CRISTOVAO",
+        "VILA MATILDE",
         "ZONA RURAL"
     ],
     "TERRA BOA": [
@@ -1628,10 +1986,17 @@ const localidadesPR = {
     "TOLEDO": [
         "CENTRO",
         "COOPAGRO",
+        "DOIS IRMAOS",
         "EUROPA",
+        "JARDIM BRESSAN",
+        "JARDIM COOPAGRO",
+        "JARDIM GISELA",
         "LA SALLE",
         "PANORAMA",
         "PIONEIRO",
+        "SANTA CLARA",
+        "SAO FRANCISCO",
+        "VILA INDUSTRIAL",
         "ZONA RURAL"
     ],
     "TOMAZINA": [
@@ -1664,10 +2029,28 @@ const localidadesPR = {
     ],
     "UMUARAMA": [
         "CENTRO",
+        "JARDIM DAS PALMEIRAS",
+        "JARDIM PARIS",
+        "JARDIM PETROPOLIS",
+        "PARQUE DANIELLE",
+        "PARQUE JABOTICABEIRAS",
+        "PARQUE SAN MARINO",
+        "ZONA 7",
+        "ZONA I",
+        "ZONA II",
+        "ZONA III",
+        "ZONA VI",
         "ZONA RURAL"
     ],
     "UNIAO DA VITORIA": [
         "CENTRO",
+        "CIDADE JARDIM",
+        "NAVEGANTES",
+        "ROCIO",
+        "SAO BASILIO MAGNO",
+        "SAO BRAZ",
+        "SAO CRISTOVAO",
+        "SAO GABRIEL",
         "ZONA RURAL"
     ],
     "UNIFLOR": [
