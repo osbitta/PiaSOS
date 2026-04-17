@@ -1526,7 +1526,7 @@ async function aplicarPui() {
             if(!prefixo || !placa) return alert('Preencha prefixo e placa');
             
             try{ 
-                await api('tb_viaturas','', 'POST', { prefixo: prefixo, tipo: tipo, placa: placa, guarnicao: 'LIVRE', status_viatura: 'Disponível', telefone_vtr: telefone }); 
+                await api('tb_viaturas','', 'POST', { prefixo: prefixo, tipo: tipo, placa: placa, guarnicao: 'LIVRE', status_viatura: 'Disponível', telefone_vtr: telefone, agencia_origem: _agenciaOrigem() }); 
                 fecharModal('modalNovaViatura'); 
                 document.getElementById('nv_prefixo').value = '';
                 document.getElementById('nv_tipo').value = 'Rádio Patrulha';
@@ -1541,7 +1541,7 @@ async function aplicarPui() {
         async function carregarViaturas(){
             const tb = document.getElementById('adminTabelaViaturas'); tb.innerHTML='<tr><td colspan="6" style="padding:12px;color:gray">Buscando...</td></tr>';
             try{
-                const viaturas = await api('tb_viaturas','select=*&order=prefixo.asc');
+                const viaturas = await api('tb_viaturas',`select=*&order=prefixo.asc${_filtroAgencia()}`);
                 tb.innerHTML='';
                 viaturas.forEach(v=>{
                     const tr = document.createElement('tr');
@@ -1560,7 +1560,7 @@ async function aplicarPui() {
             const container = document.getElementById('listaFrota');
             container.innerHTML = '<div style="padding:20px; color:gray;">Carregando...</div>';
             try{
-                const viaturas = await api('tb_viaturas','select=*&order=prefixo.asc');
+                const viaturas = await api('tb_viaturas',`select=*&order=prefixo.asc${_filtroAgencia()}`);
                 container.innerHTML = '';
                 
                 viaturas.forEach(v => {
@@ -2063,7 +2063,7 @@ async function aplicarPui() {
         async function abrirSelecaoFrotaModal(idOco, tipo) {
             tipoFuncaoSelecao = tipo;
             try {
-                const viaturas = await api('tb_viaturas', "status_viatura=eq.Disponível&select=*");
+                const viaturas = await api('tb_viaturas', `status_viatura=eq.Disponível&select=*${_filtroAgencia()}`);
                 const lista = document.getElementById('msfLista');
                 lista.innerHTML = '';
                 
@@ -2404,7 +2404,7 @@ async function aplicarPui() {
             listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Carregando...</div>';
             
             try {
-                const viaturas = await api('tb_viaturas', 'status_viatura=in.(DISPONIVEL,Disponível)&order=prefixo.asc');
+                const viaturas = await api('tb_viaturas', `status_viatura=in.(DISPONIVEL,Disponível)&order=prefixo.asc${_filtroAgencia()}`);
                 listDiv.innerHTML = '';
                 
                 if(viaturas.length === 0) {
