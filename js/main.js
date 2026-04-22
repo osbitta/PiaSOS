@@ -8,6 +8,12 @@
         let timerOcorrencia = null;
         let veiculosArray = [], suspeitosArray = [], veiculoTemp = null, idEmEdicao = null, idSelecionadoDespacho = null, ocoAtual = null;
 
+        // Variáveis do Mapa de Atendimento
+        let mapaAtendimento = null;
+        let marcadorAtendimento = null;
+        let tileLayerAtendimento = null;
+        let ignoraProxSincronizacaoMapa = false;
+
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const modais = document.querySelectorAll('.modal-overlay');
@@ -234,6 +240,14 @@ async function aplicarPui() {
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('userAvatar').innerText=usuarioAtual.nome_guerra[0];
 
+            // Título de Jurisdição Dinâmico no Atendimento
+            const tit = document.getElementById('tituloOcorrencia');
+            if (tit) {
+                const ufTxt = (usuarioAtual.uf_origem === 'SC') ? 'Santa Catarina' : 'Paraná';
+                const ageTxt = usuarioAtual.agencia ? `(${usuarioAtual.agencia})` : '';
+                tit.innerText = `Novo Atendimento - ${ufTxt} ${ageTxt}`;
+            }
+
             // Controle de visibilidade da navbar por perfil
             const perfil = usuarioAtual.perfil_acesso;
             const todosNavIds = ['atendimento','triagem','monitoramento','frota','alertas','admin','moderador'];
@@ -251,6 +265,11 @@ async function aplicarPui() {
             navegar('atendimento'); // navegar() redireciona para 'moderador' se perfil for MODERADOR
             // Carregar o radar com filtro de agência correto após login
             if(typeof carregarOcorrenciasParaRadar === 'function') carregarOcorrenciasParaRadar();
+            
+            // Inicializar o mapa do formulário de atendimento (com timeout para o CSS do Leaflet renderizar o container)
+            setTimeout(() => {
+                if(typeof initMapaAtendimento === 'function') initMapaAtendimento();
+            }, 500);
         }
 
         // --- PERFIL DO USUÁRIO ---
@@ -318,6 +337,14 @@ async function aplicarPui() {
             const btn = document.getElementById('themeToggleBtn');
             btn.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             localStorage.setItem('piabi_theme', newTheme);
+            
+            // Sincronizar tema no Mapa de Atendimento (se já estiver montado)
+            if (typeof tileLayerAtendimento !== 'undefined' && tileLayerAtendimento) {
+                const url = newTheme === 'dark' 
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
+                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+                tileLayerAtendimento.setUrl(url);
+            }
         }
         
         async function handleLogin(e) { 
@@ -416,14 +443,41 @@ async function aplicarPui() {
         }
 
         // --- ATENDIMENTO ---
-        async function buscarCep(cep) { cep=cep.replace(/\D/g,''); if(cep.length!==8)return; try{const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`);const d=await r.json();if(!d.erro){ document.getElementById('endLog').value=d.logradouro; document.getElementById('endBairro').value=d.bairro; document.getElementById('endCidade').value=d.localidade; }}catch(e){} }
+        async function buscarCep(cep) { 
+            cep = cep.replace(/\D/g, ''); 
+            if(cep.length !== 8) return; 
+            try {
+                const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const d = await r.json();
+                if(!d.erro) { 
+                    document.getElementById('endLog').value = d.logradouro; 
+                    document.getElementById('endBairro').value = d.bairro; 
+                    document.getElementById('endCidade').value = d.localidade; 
+                    
+                    // (NOVO) Acionar sincronização do mapa após CEP
+                    if (typeof atualizarMarcadorPeloPhoton === 'function') {
+                        try {
+                            const ufNome = (typeof usuarioAtual !== 'undefined' && usuarioAtual.uf_origem === 'SC') ? "Santa Catarina" : "Parana";
+                            const req = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(d.logradouro + ", " + d.localidade + ", " + ufNome)}&limit=1`);
+                            const geoD = await req.json();
+                            if(geoD.features && geoD.features.length) {
+                                const pos = geoD.features[0].geometry.coordinates; // [lon, lat]
+                                atualizarMarcadorPeloPhoton(pos[1], pos[0]);
+                            }
+                        } catch(e) {}
+                    }
+                }
+            } catch(e) {} 
+        }
 
         // --- HELPERS DE AGÊNCIA ---
         function _agenciaOrigem() {
             const agencia = usuarioAtual?.agencia || 'SISTEMA';
             const cidade  = (usuarioAtual?.cidade_origem || '').trim().toUpperCase();
-            return cidade ? `${agencia}-${cidade}` : agencia;
-            // Ex: GM Curitiba → 'GM-CURITIBA' | PM estadual → 'PM'
+            const uf = (usuarioAtual?.uf_origem || 'PR').trim().toUpperCase();
+            
+            return cidade ? `${agencia}-${uf}-${cidade}` : `${agencia}-${uf}`;
+            // Ex: GM Curitiba → 'GM-PR-CURITIBA' | PM estadual → 'PM-SC' ou 'PM-PR'
         }
 
         function _confirmarForaDeArea() {
@@ -510,6 +564,100 @@ async function aplicarPui() {
             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoFormatado)}`, '_blank');
         }
 
+        // --- MAPA LEAFLET ATENDIMENTO ---
+        function initMapaAtendimento() {
+            if (mapaAtendimento) return;
+            const mapEl = document.getElementById('atend-mapa');
+            if(!mapEl) return;
+            
+            // Centro padrão (Curitiba)
+            const coords = [-25.4284, -49.2733];
+            mapaAtendimento = L.map('atend-mapa').setView(coords, 14);
+
+            // Define o provedor inicial com base no tema setado
+            const temaAtual = document.documentElement.getAttribute('data-theme') || 'light';
+            const tileSrc = temaAtual === 'dark' 
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+            // Mudança para o provedor do CartoDB (livre de bloqueios 403 por falta de referer)
+            tileLayerAtendimento = L.tileLayer(tileSrc, {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                maxZoom: 19
+            }).addTo(mapaAtendimento);
+
+            marcadorAtendimento = L.marker(coords, { draggable: true }).addTo(mapaAtendimento);
+
+            marcadorAtendimento.on('dragend', async function(event) {
+                const position = event.target.getLatLng();
+                try {
+                    ignoraProxSincronizacaoMapa = true;
+                    // Reverse geocoding via Photon
+                    const res = await fetch(`https://photon.komoot.io/reverse?lon=${position.lng}&lat=${position.lat}`);
+                    if(!res.ok) throw new Error('Erro na API');
+                    const d = await res.json();
+                    
+                    if(d.features && d.features.length > 0) {
+                        const props = d.features[0].properties;
+                        if(props.street || props.name) document.getElementById('endLog').value = props.street || props.name;
+                        if(props.housenumber) document.getElementById('endNum').value = props.housenumber;
+                        if(props.district || props.locality) document.getElementById('endBairro').value = props.district || props.locality;
+                        if(props.city) document.getElementById('endCidade').value = props.city;
+                    }
+                } catch(e) { 
+                    console.error('Erro na geocodificacao reversa:', e); 
+                } finally {
+                    // Libera a trava após um curto tempo
+                    setTimeout(() => { ignoraProxSincronizacaoMapa = false; }, 500);
+                }
+            });
+            
+            // Garantir que a renderização dos tiles se ajuste ao container corretamente
+        setTimeout(() => { mapaAtendimento.invalidateSize(); }, 500);
+    }
+
+    async function refinarMapaPorNumero() {
+        const num = document.getElementById('endNum').value.trim();
+        const log = document.getElementById('endLog').value.trim();
+        const cid = document.getElementById('endCidade').value.trim();
+        if(!num || !log || !cid) return;
+        
+        if (typeof atualizarMarcadorPeloPhoton === 'function') {
+            try {
+                const ufNome = (typeof usuarioAtual !== 'undefined' && usuarioAtual.uf_origem === 'SC') ? "Santa Catarina" : "Parana";
+                const q = encodeURIComponent(`${log} ${num}, ${cid}, ${ufNome}`);
+                const req = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=1`);
+                const geoD = await req.json();
+                
+                if(geoD.features && geoD.features.length) {
+                    const feature = geoD.features[0];
+                    const pos = feature.geometry.coordinates; // [lon, lat]
+                    
+                    atualizarMarcadorPeloPhoton(pos[1], pos[0]);
+                    
+                    // Ghost validation do Bairro (Preenchimento Silencioso)
+                    const endBairro = document.getElementById('endBairro');
+                    if (!endBairro.value.trim()) {
+                        const props = feature.properties;
+                        const sugerido = props.district || props.suburb || props.village;
+                        if (sugerido) {
+                            endBairro.value = sugerido.toUpperCase();
+                            endBairro.classList.add('bairro-sugerido');
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+    }
+
+    function atualizarMarcadorPeloPhoton(lat, lon) {
+            if(!mapaAtendimento || !marcadorAtendimento || ignoraProxSincronizacaoMapa) return;
+            const pt = new L.LatLng(lat, lon);
+            marcadorAtendimento.setLatLng(pt);
+            mapaAtendimento.setView(pt, 17, { animate: true });
+        }
+
+
         let timeoutLog; 
         function sugerirLogradouro(txt) { 
             clearTimeout(timeoutLog); 
@@ -539,6 +687,11 @@ async function aplicarPui() {
                                 const numEl = document.getElementById('endNum');
                                 if(numEl) numEl.focus();
                                 if(typeof renderizarRadarLateral === 'function') renderizarRadarLateral();
+                                
+                                // Atualizar o mapa com a coordenada retornada pelo Photon
+                                if(f.geometry && f.geometry.coordinates && typeof atualizarMarcadorPeloPhoton === 'function') {
+                                    atualizarMarcadorPeloPhoton(f.geometry.coordinates[1], f.geometry.coordinates[0]);
+                                }
                             };
                             box.appendChild(div);
                         });
@@ -563,7 +716,8 @@ async function aplicarPui() {
             
             timeoutCid = setTimeout(() => { 
                 try {
-                    const matches = cidadesPR.filter(c => _sugNorm(c).includes(termo)).slice(0, 10);
+                    const arrCidades = (typeof usuarioAtual !== 'undefined' && usuarioAtual.uf_origem === 'SC') ? cidadesSC : cidadesPR;
+                    const matches = arrCidades.filter(c => _sugNorm(c).includes(termo)).slice(0, 10);
                     box.innerHTML = ''; 
                     if(matches.length){
                         box.classList.remove('hidden');
@@ -574,8 +728,9 @@ async function aplicarPui() {
                             div.onclick = () => { 
                                 document.getElementById('endCidade').value = div.innerText; 
                                 box.classList.add('hidden'); 
-                                const endBairro = document.getElementById('endBairro');
-                                if(endBairro) endBairro.focus();
+                                // Correção de Usabilidade: após cidade, focar no logradouro em vez de bairro
+                                const endLog = document.getElementById('endLog');
+                                if(endLog) endLog.focus();
                                 if(typeof renderizarRadarLateral === 'function') renderizarRadarLateral();
                             };
                             box.appendChild(div);
@@ -596,7 +751,8 @@ async function aplicarPui() {
             if(termo.length < 1 || !cid) { box.classList.add('hidden'); return; } 
             
             const cidNorm = _sugNorm(cid);
-            const bairrosDaCidade = localidadesPR[cidNorm];
+            const arrLocalidades = (typeof usuarioAtual !== 'undefined' && usuarioAtual.uf_origem === 'SC') ? localidadesSC : localidadesPR;
+            const bairrosDaCidade = arrLocalidades[cidNorm];
             if(!bairrosDaCidade) { box.classList.add('hidden'); return; }
             
             timeoutBairro = setTimeout(() => { 
