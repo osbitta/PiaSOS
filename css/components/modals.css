@@ -1,4 +1,4 @@
-﻿        /* DRAWERS (Gavetas Laterais) */
+        /* DRAWERS (Gavetas Laterais) */
         .drawer { position: fixed; top: 0; width: 400px; height: 100%; background: var(--card-bg); border: 1px solid var(--border); transition: transform 0.3s ease; z-index: 300; display: flex; flex-direction: column; }
         .drawer-left { left: 0; border-right: 1px solid var(--border); transform: translateX(-100%); }
         .drawer-right { right: 0; border-left: 1px solid var(--border); transform: translateX(100%); }
@@ -39,7 +39,7 @@
         #login-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg-dark); z-index: 100; }
         .login-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 30px; width: 90%; max-width: 380px; }
         .suggestions { position: absolute; background: var(--border); width: 100%; z-index: 10; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); top: 55px; border-radius: 0 0 6px 6px; }
-        .sugg-item { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; }
-        .sugg-item:hover { background: var(--secondary); }
+        .sugg-item { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; color: var(--text-light); }
+        .sugg-item:hover { background: var(--bg-hover); }
         .dynamic-list { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
         .list-entry { background: var(--bg-header); padding: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; border: 1px solid var(--border); }
