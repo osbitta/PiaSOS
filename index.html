@@ -135,14 +135,33 @@
                                     <div style="flex: 1; position: relative;"><label>Bairro</label><div class="input-wrapper"><i class="fas fa-map icon-left"></i><input type="text" id="endBairro" oninput="sugerirBairro(this.value)" onfocus="this.classList.remove('bairro-sugerido')" autocomplete="off" tabindex="8"></div><div id="sugestoesBairro" class="suggestions hidden"></div></div>
                                 </div>
                                 <div>
-                                    <label>Referência</label>
-                                    <div class="input-wrapper"><i class="fas fa-map-pin icon-left"></i><input type="text" id="endRef" tabindex="9"></div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <div style="flex: 1;">
+                                            <label>Referência</label>
+                                            <div class="input-wrapper">
+                                                <i class="fas fa-map-pin icon-left"></i>
+                                                <input type="text" id="endRef" tabindex="9">
+                                            </div>
+                                        </div>
+                                        <div style="flex: 1; position: relative;">
+                                            <label>Esquina</label>
+                                            <div class="input-wrapper">
+                                                <i class="fas fa-crosshairs icon-left"></i>
+                                                <input type="text" id="endEsquina" placeholder="Rua do cruzamento..." 
+                                                       autocomplete="off" oninput="sugerirEsquina(this.value)" tabindex="10">
+                                            </div>
+                                            <div id="sugestoesEsquina" class="suggestions hidden"></div>
+                                        </div>
+                                    </div>
                                     <div style="margin-top:6px; display: flex; gap: 8px;">
-    <button type="button" class="btn btn-sm btn-outline" style="max-width:220px;" onclick="adicionarSemPontoReferencia()" tabindex="10">SEM REFERÊNCIA</button>
-    <button type="button" class="btn btn-sm btn-outline" title="Verificar no Mapa" style="width: auto; padding: 6px 15px;" onclick="abrirMapaAtendimento()" tabindex="-1">
-        <i class="fas fa-map-marked-alt" style="font-size:14px;"></i>
-    </button>
-</div>
+                                        <button type="button" class="btn btn-sm btn-outline" style="max-width:220px;" onclick="adicionarSemPontoReferencia()" tabindex="11">SEM REFERÊNCIA</button>
+                                        <button type="button" class="btn btn-sm btn-outline" title="Verificar no Mapa" style="width: auto; padding: 6px 15px;" onclick="abrirMapaAtendimento()" tabindex="-1">
+                                            <i class="fas fa-map-marked-alt" style="font-size:14px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-info" id="btnBuscarEsquina" onclick="buscarEsquina()" tabindex="-1" title="Localizar cruzamento no mapa">
+                                            <i class="fas fa-crosshairs"></i> ESQUINA
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div id="atend-mapa" style="height: 250px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--secondary); background: var(--card-bg); z-index: 1;"></div>
@@ -452,7 +471,7 @@
                         <div class="modal-header"><h3>Novo Usuário</h3><i class="fas fa-times" onclick="fecharModal('modalNewUser')" style="cursor:pointer"></i></div>
                         <div class="modal-body">
                             <div style="display:flex;gap:8px;"><div style="flex:1"><label>Nome</label><input id="nu_nome"></div><div style="width:140px"><label>CPF</label><input id="nu_cpf"></div></div>
-                            <div style="display:flex;gap:8px;margin-top:8px;"><div style="flex:1"><label>Perfil</label><select id="nu_perfil"><option>Atendente</option><option>Despachante</option><option>Admin</option></select></div><div style="width:140px"><label>Senha</label><input id="nu_senha" type="password"></div></div>
+                            <div style="display:flex;gap:8px;margin-top:8px;"><div style="flex:1"><label>Perfil</label><select id="nu_perfil"><option>Atendente</option><option>Despachante</option><option>Operacional</option><option>Admin</option></select></div><div style="width:140px"><label>Senha</label><input id="nu_senha" type="password"></div></div>
                         </div>
                         <div class="modal-footer"><button class="btn btn-sm" onclick="criarUsuario()">Criar</button><button class="btn btn-sm btn-outline" onclick="fecharModal('modalNewUser')">Cancelar</button></div>
                     </div>
@@ -464,7 +483,7 @@
                         <div class="modal-body">
                             <div style="margin-bottom:8px;"><label>Nome Completo (ou de Guerra)</label><input type="text" id="edu_nome" required></div>
                             <div style="margin-bottom:8px;"><label>CPF (Bloqueado)</label><input type="text" id="edu_cpf" disabled style="background-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed;"></div>
-                            <div style="margin-bottom:8px;"><label>Perfil</label><select id="edu_perfil"><option>Atendente</option><option>Despachante</option><option>Admin</option></select></div>
+                            <div style="margin-bottom:8px;"><label>Perfil</label><select id="edu_perfil"><option>Atendente</option><option>Despachante</option><option>Operacional</option><option>Admin</option></select></div>
                             <div style="margin-bottom:8px;"><label>Senha</label><input type="password" id="edu_senha" required></div>
                             <input type="hidden" id="edu_id">
                         </div>
@@ -477,7 +496,7 @@
                         <div class="modal-header"><h3>Nova Chave de Acesso</h3><i class="fas fa-times" onclick="fecharModal('modalNewKey')" style="cursor:pointer"></i></div>
                         <div class="modal-body">
                             <div style="margin-bottom:8px;"><label>Código</label><input id="nk_codigo" placeholder="TURMA-2026"></div>
-                            <div style="display:flex;gap:8px;margin-bottom:8px;"><div style="flex:1"><label>Validade</label><select id="nk_validade"><option value="3600">1 hora</option><option value="86400">24 horas</option><option value="604800">7 dias</option><option value="0">Permanente</option></select></div><div style="width:160px"><label>Perfil</label><select id="nk_perfil"><option>Atendente</option><option>Despachante</option><option>Admin</option></select></div></div>
+                            <div style="display:flex;gap:8px;margin-bottom:8px;"><div style="flex:1"><label>Validade</label><select id="nk_validade"><option value="3600">1 hora</option><option value="86400">24 horas</option><option value="604800">7 dias</option><option value="0">Permanente</option></select></div><div style="width:160px"><label>Perfil</label><select id="nk_perfil"><option>Atendente</option><option>Despachante</option><option>Operacional</option><option>Admin</option></select></div></div>
                             <div style="margin-bottom:4px;">
                                 <label>Restringir à Cidade <span style="font-weight:400; color:var(--text-muted); font-size:11px;">(opcional — para agências municipais)</span></label>
                                 <input id="nk_cidade" placeholder="Ex: CURITIBA" style="text-transform:uppercase;">
@@ -632,9 +651,12 @@
         <div class="modal-content" style="max-width:420px;">
             <div class="modal-header"><h3>Editar Viatura</h3><i class="fas fa-times" onclick="fecharModal('modalFrotaEditar')" style="cursor:pointer"></i></div>
             <div class="modal-body">
-                <div style="margin-bottom:8px;"><label>Guarnição</label><input id="me_guarnicao" placeholder="Ex: Guarnição A"></div>
+                <div style="margin-bottom:8px;"><label>Guarnição (ID/Prefixo)</label><input id="me_guarnicao" placeholder="Ex: Guarnição A"></div>
+                <div style="margin-bottom:8px;"><label>Nome da Equipe</label><input id="me_equipe_nome" placeholder="Nomes dos agentes..."></div>
+                <div style="margin-bottom:8px;"><label>Escala</label><input id="me_equipe_escala" placeholder="Ex: 12x36"></div>
                 <div style="margin-bottom:8px; display:flex; gap:8px;">
-                    <div style="flex:1;"><label>Telefone</label><input id="me_telefone" type="tel" placeholder="11987654321"></div>
+                    <div style="flex:1;"><label>Telefone 1</label><input id="me_telefone_1" type="tel" placeholder="11987654321"></div>
+                    <div style="flex:1;"><label>Telefone 2</label><input id="me_telefone_2" type="tel" placeholder="11987654321" title="Telefone Auxiliar"></div>
                     <div style="margin-top:22px;"><button type="button" class="btn btn-sm" onclick="abrirWhatsapp()" style="background:#25D366;" title="Abrir WhatsApp"><i class="fab fa-whatsapp"></i></button></div>
                 </div>
             </div>
@@ -856,6 +878,8 @@
 <script src="js/dados_santacatarina.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Plus Code JS -->
+    <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.3/openlocationcode.min.js"></script>
     <script src="js/main.js"></script>
 
 <div id="modalConfigPui" class="modal-overlay" style="z-index: 250;">
@@ -901,6 +925,7 @@
                     <select id="ap_perfil" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
                         <option value="ATENDENTE">Atendente</option>
                         <option value="Despachante">Despachante</option>
+                        <option value="Operacional">Operacional</option>
                         <option value="Admin">Admin</option>
                         <option value="MODERADOR">Moderador</option>
                     </select>
@@ -932,6 +957,7 @@
                         <select id="ek_perfil" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; background:var(--input-bg); color:var(--text-light);">
                             <option value="Atendente">Atendente</option>
                             <option value="Despachante">Despachante</option>
+                            <option value="Operacional">Operacional</option>
                             <option value="Admin">Admin</option>
                         </select>
                     </div>
