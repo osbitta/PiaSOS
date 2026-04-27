@@ -13,6 +13,11 @@
         let marcadorAtendimento = null;
         let tileLayerAtendimento = null;
         let ignoraProxSincronizacaoMapa = false;
+        
+        // --- VARIÁVEIS ESQUINA ---
+        let modoEsquinaAtivo = false;
+        let esquinaPolyline = null;
+        let esquinaRua2Original = '';
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
@@ -592,17 +597,23 @@ async function aplicarPui() {
                 const position = event.target.getLatLng();
                 try {
                     ignoraProxSincronizacaoMapa = true;
-                    // Reverse geocoding via Photon
-                    const res = await fetch(`https://photon.komoot.io/reverse?lon=${position.lng}&lat=${position.lat}`);
-                    if(!res.ok) throw new Error('Erro na API');
-                    const d = await res.json();
                     
-                    if(d.features && d.features.length > 0) {
-                        const props = d.features[0].properties;
-                        if(props.street || props.name) document.getElementById('endLog').value = props.street || props.name;
-                        if(props.housenumber) document.getElementById('endNum').value = props.housenumber;
-                        if(props.district || props.locality) document.getElementById('endBairro').value = props.district || props.locality;
-                        if(props.city) document.getElementById('endCidade').value = props.city;
+                    if (modoEsquinaAtivo) {
+                        // Lógica de Esquina
+                        await resolverNumeralEsquina(position.lat, position.lng);
+                    } else {
+                        // Geocodificação reversa padrão via Photon
+                        const res = await fetch(`https://photon.komoot.io/reverse?lon=${position.lng}&lat=${position.lat}`);
+                        if(!res.ok) throw new Error('Erro na API');
+                        const d = await res.json();
+                        
+                        if(d.features && d.features.length > 0) {
+                            const props = d.features[0].properties;
+                            if(props.street || props.name) document.getElementById('endLog').value = props.street || props.name;
+                            if(props.housenumber) document.getElementById('endNum').value = props.housenumber;
+                            if(props.district || props.locality) document.getElementById('endBairro').value = props.district || props.locality;
+                            if(props.city) document.getElementById('endCidade').value = props.city;
+                        }
                     }
                 } catch(e) { 
                     console.error('Erro na geocodificacao reversa:', e); 
@@ -738,6 +749,149 @@ async function aplicarPui() {
                     } else { box.classList.add('hidden'); }
                 } catch(e) { box.classList.add('hidden'); }
             }, 300); 
+        }
+
+        let timeoutEsq;
+        function sugerirEsquina(txt) {
+            clearTimeout(timeoutEsq);
+            const box = document.getElementById('sugestoesEsquina');
+            if(!box) return;
+            const termo = _sugNorm(txt);
+            if(termo.length < 3) { box.classList.add('hidden'); return; }
+
+            timeoutEsq = setTimeout(async () => {
+                try {
+                    const cid = document.getElementById('endCidade').value.trim();
+                    const query = cid ? `${termo}, ${cid}` : termo;
+                    const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&osm_tag=highway`);
+                    if(!res.ok) throw new Error();
+                    const data = await res.json();
+                    
+                    box.innerHTML = '';
+                    if(data.features && data.features.length){
+                        box.classList.remove('hidden');
+                        data.features.forEach(f => {
+                            const name = f.properties.name;
+                            if(!name) return;
+                            const div = document.createElement('div');
+                            div.className = 'sugg-item';
+                            div.innerText = name;
+                            div.onclick = () => {
+                                document.getElementById('endEsquina').value = name;
+                                box.classList.add('hidden');
+                                buscarEsquina(); // Gatilho automático ao selecionar
+                            };
+                            box.appendChild(div);
+                        });
+                    } else { box.classList.add('hidden'); }
+                } catch(e) { box.classList.add('hidden'); }
+            }, 300);
+        }
+
+        // --- LÓGICA DE CRUZAMENTO (ESQUINA) ---
+        async function buscarEsquina() {
+            const rua1 = document.getElementById('endLog').value.trim();
+            const rua2 = document.getElementById('endEsquina').value.trim();
+            const cidade = document.getElementById('endCidade').value.trim();
+
+            if (!rua1 || !rua2) {
+                alert('Informe o Logradouro principal e a Rua da Esquina.');
+                return;
+            }
+
+            // Ativa o modo esquina
+            modoEsquinaAtivo = true;
+            esquinaRua2Original = rua2;
+            initMapaAtendimento(); // Garante que o mapa está iniciado
+
+            try {
+                // 1. Buscar geometria da Rua 1 para referência visual
+                const res1 = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(rua1 + ', ' + cidade)}&limit=1&osm_tag=highway`);
+                const data1 = await res1.json();
+                
+                if (esquinaPolyline) mapaAtendimento.removeLayer(esquinaPolyline);
+                
+                if (data1.features && data1.features.length) {
+                    esquinaPolyline = L.circleMarker([data1.features[0].geometry.coordinates[1], data1.features[0].geometry.coordinates[0]], {
+                        color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.5, radius: 15
+                    }).bindTooltip("Rua Principal").addTo(mapaAtendimento);
+                }
+
+                // 2. Buscar ponto da Rua 2 para posicionar o marcador
+                const res2 = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(rua2 + ', ' + cidade)}&limit=1&osm_tag=highway`);
+                const data2 = await res2.json();
+
+                if (data2.features && data2.features.length) {
+                    const lat = data2.features[0].geometry.coordinates[1];
+                    const lng = data2.features[0].geometry.coordinates[0];
+                    
+                    marcadorAtendimento.setLatLng([lat, lng]);
+                    mapaAtendimento.setView([lat, lng], 17);
+                    
+                    await resolverNumeralEsquina(lat, lng);
+                } else {
+                    alert('Não foi possível localizar a rua da esquina informada.');
+                }
+            } catch (e) {
+                console.error('Erro ao buscar esquina:', e);
+            }
+        }
+
+        async function resolverNumeralEsquina(lat, lng) {
+            try {
+                const res = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`);
+                const data = await res.json();
+                
+                let num = '000';
+                let ruaEncontrada = '';
+                let achouValido = false;
+
+                if (data.features && data.features.length) {
+                    const props = data.features[0].properties;
+                    num = props.housenumber || '000';
+                    ruaEncontrada = props.street || props.name || '';
+                }
+
+                const ruaRef = document.getElementById('endLog').value.trim();
+                const normRef = _sugNorm(ruaRef.replace(/^(RUA|AVENIDA|AV\.|TRAVESSA|ALAMEDA|ESTRADA|ROD\.|RODOVIA)\s+/i, '').trim());
+                const normEnc = _sugNorm(ruaEncontrada.replace(/^(RUA|AVENIDA|AV\.|TRAVESSA|ALAMEDA|ESTRADA|ROD\.|RODOVIA)\s+/i, '').trim());
+
+                if (normEnc && (normRef === normEnc || normRef.includes(normEnc) || normEnc.includes(normRef))) {
+                    achouValido = (num !== '000');
+                } else {
+                    num = '000';
+                }
+
+                document.getElementById('endNum').value = num;
+
+                // Gerar Plus Code (OpenLocationCode)
+                let plusCode = '---';
+                try {
+                    if (typeof OpenLocationCode !== 'undefined' && OpenLocationCode.encode) {
+                        plusCode = OpenLocationCode.encode(lat, lng, 11);
+                    }
+                } catch (e) { console.error('Erro Plus Code:', e); }
+
+                const coordTxt = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                const fraseSucesso = "NUMERAL APROXIMADO LOCALIZADO NO CRUZAMENTO INFORMADO.";
+                const fraseFalha = "NAO FOI POSSIVEL LOCALIZAR UM NUMERAL VALIDO PARA A ESQUINA INFORMADA.";
+                
+                const baseMsg = achouValido ? fraseSucesso : fraseFalha;
+                const refMsg = `${baseMsg} GPS: ${coordTxt}. PLUS CODE: ${plusCode}`;
+
+                document.getElementById('endRef').value = refMsg.toUpperCase();
+                
+                const elNum = document.getElementById('endNum');
+                if (achouValido) {
+                    elNum.style.backgroundColor = '#dcfce7';
+                } else {
+                    elNum.style.backgroundColor = '#fee2e2';
+                }
+                setTimeout(() => { elNum.style.backgroundColor = ''; }, 2000);
+
+            } catch (e) {
+                console.error('Erro ao resolver numeral da esquina:', e);
+            }
         }
 
         let timeoutBairro; 
@@ -1801,12 +1955,15 @@ async function aplicarPui() {
         function abrirEdicaoViatura(viatura){
             frotaEmEdicao = viatura;
             document.getElementById('me_guarnicao').value = viatura.guarnicao || '';
-            document.getElementById('me_telefone').value = viatura.telefone_vtr || '';
+            document.getElementById('me_equipe_nome').value = viatura.equipe_nome || '';
+            document.getElementById('me_equipe_escala').value = viatura.equipe_escala || '';
+            document.getElementById('me_telefone_1').value = viatura.telefone_1 || viatura.telefone_vtr || '';
+            document.getElementById('me_telefone_2').value = viatura.telefone_2 || '';
             document.getElementById('modalFrotaEditar').style.display = 'flex';
         }
 
         function abrirWhatsapp(){
-            const numero = document.getElementById('me_telefone').value.replace(/\D/g, '');
+            const numero = document.getElementById('me_telefone_1').value.replace(/\D/g, '');
             if(!numero) {
                 alert('Digite um telefone primeiro');
                 return;
@@ -1818,10 +1975,20 @@ async function aplicarPui() {
         async function salvarEdicaoViatura(){
             if(!frotaEmEdicao) return;
             const guarnicao = document.getElementById('me_guarnicao').value;
-            const telefone = document.getElementById('me_telefone').value.replace(/\D/g, '');
+            const equipeNome = document.getElementById('me_equipe_nome').value;
+            const equipeEscala = document.getElementById('me_equipe_escala').value;
+            const tel1 = document.getElementById('me_telefone_1').value.replace(/\D/g, '');
+            const tel2 = document.getElementById('me_telefone_2').value.replace(/\D/g, '');
             
             try{
-                await api('tb_viaturas', `id=eq.${frotaEmEdicao.id}`, 'PATCH', { guarnicao: guarnicao, telefone_vtr: telefone });
+                await api('tb_viaturas', `id=eq.${frotaEmEdicao.id}`, 'PATCH', { 
+                    guarnicao: guarnicao, 
+                    equipe_nome: equipeNome,
+                    equipe_escala: equipeEscala,
+                    telefone_1: tel1,
+                    telefone_2: tel2,
+                    telefone_vtr: tel1 // Fallback/Retrocompatibilidade
+                });
                 alert('Viatura atualizada');
                 fecharModal('modalFrotaEditar');
                 carregarFrota();
