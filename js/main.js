@@ -345,9 +345,7 @@ async function aplicarPui() {
             
             // Sincronizar tema no Mapa de Atendimento (se já estiver montado)
             if (typeof tileLayerAtendimento !== 'undefined' && tileLayerAtendimento) {
-                const url = newTheme === 'dark' 
-                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+                const url = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
                 tileLayerAtendimento.setUrl(url);
             }
         }
@@ -579,11 +577,8 @@ async function aplicarPui() {
             const coords = [-25.4284, -49.2733];
             mapaAtendimento = L.map('atend-mapa').setView(coords, 14);
 
-            // Define o provedor inicial com base no tema setado
-            const temaAtual = document.documentElement.getAttribute('data-theme') || 'light';
-            const tileSrc = temaAtual === 'dark' 
-                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+            // Define o provedor inicial de tiles (sempre claro)
+            const tileSrc = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 
             // Mudança para o provedor do CartoDB (livre de bloqueios 403 por falta de referer)
             tileLayerAtendimento = L.tileLayer(tileSrc, {
@@ -864,22 +859,11 @@ async function aplicarPui() {
 
                 document.getElementById('endNum').value = num;
 
-                // Gerar Plus Code (OpenLocationCode)
-                let plusCode = '---';
-                try {
-                    if (typeof OpenLocationCode !== 'undefined' && OpenLocationCode.encode) {
-                        plusCode = OpenLocationCode.encode(lat, lng, 11);
-                    }
-                } catch (e) { console.error('Erro Plus Code:', e); }
-
-                const coordTxt = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
                 const fraseSucesso = "NUMERAL APROXIMADO LOCALIZADO NO CRUZAMENTO INFORMADO.";
                 const fraseFalha = "NAO FOI POSSIVEL LOCALIZAR UM NUMERAL VALIDO PARA A ESQUINA INFORMADA.";
                 
                 const baseMsg = achouValido ? fraseSucesso : fraseFalha;
-                const refMsg = `${baseMsg} GPS: ${coordTxt}. PLUS CODE: ${plusCode}`;
-
-                document.getElementById('endRef').value = refMsg.toUpperCase();
+                document.getElementById('endRef').value = baseMsg.toUpperCase();
                 
                 const elNum = document.getElementById('endNum');
                 if (achouValido) {
@@ -1103,6 +1087,26 @@ async function aplicarPui() {
             return tags.some(t => critic.includes(t)) ? 'CRITICA' : 'NORMAL';
         }
 
+        function aplicarGpsNaReferencia() {
+            if (mapaAtendimento && marcadorAtendimento) {
+                const lat = marcadorAtendimento.getLatLng().lat;
+                const lng = marcadorAtendimento.getLatLng().lng;
+                let plusCode = '---';
+                if (typeof OpenLocationCode !== 'undefined') {
+                    try { 
+                        const olc = new OpenLocationCode();
+                        plusCode = olc.encode(lat, lng, 11); 
+                    } catch(e) {}
+                }
+                const coordTxt = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                const refAdd = ` GPS: ${coordTxt}. PLUS CODE: ${plusCode}`;
+                const endRefEl = document.getElementById('endRef');
+                if (!endRefEl.value.includes('GPS:')) {
+                    endRefEl.value = (endRefEl.value + refAdd).trim();
+                }
+            }
+        }
+
         async function salvar(destino) {
             const btn = destino==='TRIAGEM'?document.getElementById('btnTriagem'):document.getElementById('btnGerar'); btn.innerText='...'; btn.disabled=true;
             if(document.getElementById('vPlaca').value || document.getElementById('vDesc').value) addVeiculo();
@@ -1110,7 +1114,8 @@ async function aplicarPui() {
             const checks = Array.from(document.querySelectorAll('.tag-check:checked')).map(c=>c.value);
             const radios = Array.from(document.querySelectorAll('.tag-radio:checked, .sade-radio:checked')).map(c=>c.value);
             const tags = [...checks, ...radios];
-            
+            aplicarGpsNaReferencia();
+
             const dados = {
                 solicitante: {
                     nome: document.getElementById('solNome').value.toUpperCase(),
@@ -1123,6 +1128,7 @@ async function aplicarPui() {
                     numero: document.getElementById('endNum').value.toUpperCase(),
                     bairro: document.getElementById('endBairro').value.toUpperCase(),
                     referencia: document.getElementById('endRef').value.toUpperCase(),
+                    esquina: document.getElementById('endEsquina') ? document.getElementById('endEsquina').value.toUpperCase() : '',
                     formatado: `${document.getElementById('endLog').value.toUpperCase()}, ${document.getElementById('endNum').value.toUpperCase()} - ${document.getElementById('endBairro').value.toUpperCase()}, ${document.getElementById('endCidade').value.toUpperCase()}`
                 },
                 classificacoes: tags,
@@ -1168,6 +1174,8 @@ async function aplicarPui() {
             const radios = Array.from(document.querySelectorAll('.tag-radio:checked, .sade-radio:checked')).map(c=>c.value);
             const tags = [...checks, ...radios];
             
+            aplicarGpsNaReferencia();
+
             const dados = {
                 solicitante: {
                     nome: document.getElementById('solNome').value.toUpperCase(),
@@ -1298,6 +1306,8 @@ async function aplicarPui() {
             const radios = Array.from(document.querySelectorAll('.tag-radio:checked, .sade-radio:checked')).map(c=>c.value);
             const tags = [...checks, ...radios];
             
+            aplicarGpsNaReferencia();
+
             const dados = {
                 solicitante: {
                     nome: document.getElementById('solNome').value.toUpperCase(),
@@ -1873,22 +1883,67 @@ async function aplicarPui() {
                 const viaturas = await api('tb_viaturas',`select=*&order=prefixo.asc${_filtroAgencia()}`);
                 container.innerHTML = '';
                 
+                const agora = new Date();
                 viaturas.forEach(v => {
                     // Estados que indicam viatura empenhada/despachada (bloqueia edição de status)
-                    const dispatchedStates = ['Despachada', 'DESLOCANDO', 'Em Atendimento', 'NO_LOCAL', 'SAIDA'];
+                    const dispatchedStates = ['Despachada', 'Em Apoio', 'DESLOCANDO', 'Em Atendimento', 'NO_LOCAL', 'SAIDA'];
                     const isDispatched = dispatchedStates.includes(v.status_viatura);
 
                     const linhaDiv = document.createElement('div');
-                    linhaDiv.style.cssText = 'background:var(--bg-header); border:1px solid var(--border); border-radius:6px; padding:12px; display:flex; justify-content:space-between; align-items:center; gap:10px;';
+                    linhaDiv.style.cssText = 'background:var(--bg-header); border:1px solid var(--border); border-radius:6px; padding:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;';
                     
-                    // ESQUERDA - Prefixo, Tipo, Guarnição
+                    // Cálculo Timer Último Atendimento
+                    let timerAtendimentoTxt = '---';
+                    if (v.ultimo_atendimento_fim) {
+                        const baseAtend = new Date(v.ultimo_atendimento_fim);
+                        const diffM = Math.floor((agora - baseAtend) / 60000);
+                        if (diffM >= 0 && diffM < 1440) { // Menos de 24h
+                            const h = Math.floor(diffM / 60);
+                            const m = diffM % 60;
+                            timerAtendimentoTxt = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                        }
+                    }
+
+                    // Cálculo Timer em Pausa
+                    let timerPausaTxt = '';
+                    const statusPausa = ['Administrativo', 'Refeição', 'Manutenção', 'Abastecimento'];
+                    if (statusPausa.includes(v.status_viatura) && v.hora_status) {
+                        const basePausa = new Date(v.hora_status);
+                        const diffM = Math.floor((agora - basePausa) / 60000);
+                        if (diffM >= 0) {
+                            const h = Math.floor(diffM / 60);
+                            const m = diffM % 60;
+                            timerPausaTxt = h > 0 ? `⏱ Pausa: ${h}h ${m}m` : `⏱ Pausa: ${m}m`;
+                        }
+                    }
+
+                    // ESQUERDA - Prefixo, Tipo, Guarnição e Timers
                     const esquerda = document.createElement('div');
-                    esquerda.style.cssText = 'flex:2; font-size:13px;';
-                    esquerda.innerHTML = `<div style="font-weight:700; font-size:14px;">${v.prefixo}</div><div style="color:var(--text-muted); font-size:11px;">${v.tipo} | ${v.guarnicao || 'LIVRE'}</div>`;
+                    esquerda.style.cssText = 'flex:2; font-size:13px; min-width:200px;';
+                    
+                    let badgeOcorrencia = '';
+                    if (isDispatched) {
+                        if (v.status_viatura === 'Em Apoio') {
+                            badgeOcorrencia = `<span style="background:var(--warning); color:black; padding:2px 6px; border-radius:4px; font-weight:600;">🚨 Em Apoio</span>`;
+                        } else {
+                            badgeOcorrencia = `<span style="background:var(--danger); color:white; padding:2px 6px; border-radius:4px; font-weight:600;">🚨 Em Ocorrência</span>`;
+                        }
+                    } else {
+                        badgeOcorrencia = `<span style="background:var(--bg-hover); color:var(--info); padding:2px 6px; border-radius:4px; font-weight:600;" title="Tempo desde o último atendimento">⏱ Últ. Atend: ${timerAtendimentoTxt}</span>`;
+                    }
+                    
+                    esquerda.innerHTML = `
+                        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${v.prefixo}</div>
+                        <div style="color:var(--text-muted); font-size:11px; margin-bottom:6px;">${v.tipo} | ${v.guarnicao || 'LIVRE'}</div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:11px;">
+                            ${badgeOcorrencia}
+                            ${timerPausaTxt ? `<span style="background:rgba(255,165,0,0.15); color:orange; padding:2px 6px; border-radius:4px; font-weight:600;">${timerPausaTxt}</span>` : ''}
+                        </div>
+                    `;
                     
                     // CENTRO - Dropdown de Status
                     const centro = document.createElement('div');
-                    centro.style.cssText = 'flex:2; display:flex; flex-direction:column; gap:4px;';
+                    centro.style.cssText = 'flex:1.5; display:flex; flex-direction:column; gap:4px; min-width:140px;';
                     const selectStatus = document.createElement('select');
                     selectStatus.style.cssText = 'padding:6px; background:var(--input-bg); border:1px solid var(--border); border-radius:4px; color:var(--text-light); font-size:12px; width:100%;';
                     // Se viatura estiver despachada/em uso, mostrar select com única opção 'Despachada' (travado)
@@ -1923,7 +1978,7 @@ async function aplicarPui() {
                     
                     // DIREITA - Botão Editar
                     const direita = document.createElement('div');
-                    direita.style.cssText = 'flex:0.5; display:flex; gap:6px;';
+                    direita.style.cssText = 'flex:0.5; display:flex; gap:6px; justify-content: flex-end; min-width:40px;';
                     const btnEditar = document.createElement('button');
                     btnEditar.className = 'btn btn-sm';
                     btnEditar.innerHTML = '<i class="fas fa-pen"></i>';
@@ -1943,7 +1998,11 @@ async function aplicarPui() {
 
         async function atualizarStatusViatura(id, novoStatus){
             try{
-                await api('tb_viaturas', `id=eq.${id}`, 'PATCH', { status_viatura: novoStatus });
+                const payload = { 
+                    status_viatura: novoStatus,
+                    hora_status: new Date().toISOString()
+                };
+                await api('tb_viaturas', `id=eq.${id}`, 'PATCH', payload);
                 alert('Status atualizado');
                 carregarFrota();
             }catch(e){
@@ -2080,8 +2139,9 @@ async function aplicarPui() {
                 
                 // Endereço
                 if(info.endereco) {
+                    const esqText = info.endereco.esquina ? `<br><span style="color:var(--info);">Esq: ${info.endereco.esquina}</span>` : '';
                     const refText = info.endereco.referencia ? `<br><span style="color:var(--warning);">Ref: ${info.endereco.referencia}</span>` : '';
-                    document.getElementById('ma-endereco').innerHTML = `<strong>${info.endereco.logradouro}, ${info.endereco.numero}</strong><br>${info.endereco.bairro}, ${info.endereco.cidade}${refText}`;
+                    document.getElementById('ma-endereco').innerHTML = `<strong>${info.endereco.logradouro}, ${info.endereco.numero}</strong><br>${info.endereco.bairro}, ${info.endereco.cidade}${esqText}${refText}`;
                     document.getElementById('ma-btn-mapa').onclick = () => window.open(`https://maps.google.com/?q=${encodeURIComponent(info.endereco.formatado)}`, '_blank');
                 }
 
@@ -2220,8 +2280,9 @@ async function aplicarPui() {
                 });
                 
                 // Endereço com Referência
+                const esqText = info.endereco.esquina ? `<br><span style="color:var(--info);">Esq: ${info.endereco.esquina}</span>` : '';
                 const refText = info.endereco.referencia ? `<br><span style="color:var(--warning);">Ref: ${info.endereco.referencia}</span>` : '';
-                document.getElementById('mo-endereco').innerHTML = `<strong>${info.endereco.logradouro}, ${info.endereco.numero}</strong><br>${info.endereco.bairro}, ${info.endereco.cidade}${refText}`;
+                document.getElementById('mo-endereco').innerHTML = `<strong>${info.endereco.logradouro}, ${info.endereco.numero}</strong><br>${info.endereco.bairro}, ${info.endereco.cidade}${esqText}${refText}`;
 
                 // Ações dos novos botões (Mapa e Ligar)
                 document.getElementById('mo-btn-mapa').onclick = () => window.open(`https://maps.google.com/?q=${encodeURIComponent(info.endereco.formatado)}`, '_blank');
@@ -2359,7 +2420,11 @@ async function aplicarPui() {
                 if(!esAlerta) {
                     const viaturas = ocoAtual.viaturas_empenhadas || [];
                     for(const vtr of viaturas) {
-                        await api('tb_viaturas', `prefixo=eq.${vtr.prefixo}`, 'PATCH', { status_viatura: 'Disponível' });
+                        const payload = { status_viatura: 'Disponível' };
+                        if (vtr.funcao === 'PRINCIPAL') {
+                            payload.ultimo_atendimento_fim = new Date().toISOString();
+                        }
+                        await api('tb_viaturas', `prefixo=eq.${vtr.prefixo}`, 'PATCH', payload);
                     }
                 }
                 
@@ -2386,15 +2451,51 @@ async function aplicarPui() {
         async function abrirSelecaoFrotaModal(idOco, tipo) {
             tipoFuncaoSelecao = tipo;
             try {
-                const viaturas = await api('tb_viaturas', `status_viatura=eq.Disponível&select=*${_filtroAgencia()}`);
+                let viaturas = await api('tb_viaturas', `status_viatura=eq.Disponível&select=*${_filtroAgencia()}`);
                 const lista = document.getElementById('msfLista');
                 lista.innerHTML = '';
+                
+                const agora = new Date();
+                
+                // Calcular timers e ordenar
+                viaturas = viaturas.map(v => {
+                    let diffM = null;
+                    let txtTimer = '---';
+                    if (v.ultimo_atendimento_fim) {
+                        const base = new Date(v.ultimo_atendimento_fim);
+                        diffM = Math.floor((agora - base) / 60000);
+                        if (diffM >= 0 && diffM < 1440) {
+                            const h = Math.floor(diffM / 60);
+                            const m = diffM % 60;
+                            txtTimer = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                        } else {
+                            diffM = null; // para tratar >24h como ---
+                        }
+                    }
+                    return { ...v, diffM, txtTimer };
+                });
+                
+                // Ordenação: 1º '---' (diffM null), 2º Maior tempo descrescente, 3º Menor tempo
+                viaturas.sort((a, b) => {
+                    if (a.diffM === null && b.diffM !== null) return -1;
+                    if (a.diffM !== null && b.diffM === null) return 1;
+                    if (a.diffM === null && b.diffM === null) return 0;
+                    return b.diffM - a.diffM; // Decrescente
+                });
                 
                 viaturas.forEach(v => {
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-info' ;
-                    btn.style.cssText = 'margin-bottom:10px; text-align:left; padding:12px;';
-                    btn.innerHTML = `<strong>${v.prefixo}</strong> - ${v.tipo} (${v.placa})`;
+                    btn.style.cssText = 'margin-bottom:10px; text-align:left; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;';
+                    btn.innerHTML = `
+                        <div style="flex:1; min-width:150px;">
+                            <strong>${v.prefixo}</strong> - ${v.tipo} (${v.placa})
+                        </div>
+                        <div style="display:flex; gap:8px; font-size:11px; white-space:nowrap;">
+                            <span style="background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; color:white;">⏱ Timer: ${v.txtTimer}</span>
+                            <span style="background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; color:white;">📍 Distância: -- km</span>
+                        </div>
+                    `;
                     btn.onclick = () => empenharViatura(idOco, v.prefixo, tipo);
                     lista.appendChild(btn);
                 });
@@ -2430,9 +2531,9 @@ async function aplicarPui() {
                     hora_despacho: agora
                 });
                 
-                // Marcar viatura como em uso (padronizado para 'Despachada')
+                // Marcar viatura como em uso (padronizado para 'Despachada' ou 'Em Apoio')
                 await api('tb_viaturas', `prefixo=eq.${prefixo}`, 'PATCH', {
-                    status_viatura: 'Despachada'
+                    status_viatura: tipo === 'PRINCIPAL' ? 'Despachada' : 'Em Apoio'
                 });
                 
                 fecharModal('modalSelecaoFrota');
@@ -2474,9 +2575,9 @@ async function aplicarPui() {
                     hora_despacho: agora
                 });
                 
-                // 5. Atualizar status da viatura para 'Despachada'
+                // 5. Atualizar status da viatura para 'Despachada' ou 'Em Apoio'
                 await api('tb_viaturas', `prefixo=eq.${prefixo}`, 'PATCH', {
-                    status_viatura: 'Despachada'
+                    status_viatura: funcao === 'PRINCIPAL' ? 'Despachada' : 'Em Apoio'
                 });
                 
                 alert(`${prefixo} despachado como ${funcao}`);
@@ -2654,12 +2755,14 @@ async function aplicarPui() {
                     status: 'FINALIZADA'
                 });
                 
-                // 3. Liberar todas as viaturas
+                // 3. Liberar todas as viaturas e atualizar timer (Apenas PRINCIPAL)
                 const viaturas = ocoAtual.viaturas_empenhadas || [];
                 for(const vtr of viaturas) {
-                    await api('tb_viaturas', `prefixo=eq.${vtr.prefixo}`, 'PATCH', {
-                        status_viatura: 'Disponível'
-                    });
+                    const payload = { status_viatura: 'Disponível' };
+                    if (vtr.funcao === 'PRINCIPAL') {
+                        payload.ultimo_atendimento_fim = new Date().toISOString();
+                    }
+                    await api('tb_viaturas', `prefixo=eq.${vtr.prefixo}`, 'PATCH', payload);
                 }
                 
                 alert('Ocorrência finalizada');
@@ -2965,6 +3068,7 @@ function renderizarRadarLateral() {
     const filtroCidade = _normStr(document.getElementById('endCidade')?.value || '');
     const filtroBairro = _normStr(document.getElementById('endBairro')?.value || '');
     const filtroRua = _normStr(document.getElementById('endLog')?.value || '');
+    const filtroTel = (document.getElementById('solTel')?.value || '').replace(/\D/g, '');
 
     let filtradas = radarOcorrenciasMemoria.map(oc => {
         const info = oc.dados_preenchidos;
@@ -2975,6 +3079,13 @@ function renderizarRadarLateral() {
         const relato = _normStr(oc.resumo_texto || '');
 
         let score = 0;
+        
+        const ocTel = (info.solicitante?.telefone || '').replace(/\D/g, '');
+        const matchTel = (filtroTel && filtroTel.length >= 8 && ocTel.includes(filtroTel));
+
+        if (matchTel) {
+            score += 10;
+        }
         if (filtroRua && filtroRua.length > 2 && (ocRua.includes(filtroRua) || relato.includes(filtroRua))) {
             score += 2;
         }
@@ -2986,7 +3097,7 @@ function renderizarRadarLateral() {
         const matchCidade = (filtroCidade && ocCidade.includes(filtroCidade));
         const isDupl = matchRua && matchCidade;
 
-        return { ...oc, score, isDuplicidade: isDupl };
+        return { ...oc, score, isDuplicidade: isDupl, isMesmoTelefone: matchTel };
     });
 
     filtradas.sort((a, b) => {
@@ -3006,7 +3117,12 @@ function renderizarRadarLateral() {
         let descText = oc.resumo_texto || "Sem descrição.";
         descText = descText.replace(/"/g, '&quot;');
 
-        const estiloFundo = oc.isDuplicidade ? 'background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.5);' : '';
+        let estiloFundo = '';
+        if (oc.isMesmoTelefone) {
+            estiloFundo = 'background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(217, 119, 6, 0.5);';
+        } else if (oc.isDuplicidade) {
+            estiloFundo = 'background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.5);';
+        }
 
         html += `
             <div class="sade-card" data-descricao="${descText}" onclick="abrirModalOcorrencia('${oc.id}', 'atendimento')" style="cursor:pointer; ${estiloFundo}">
@@ -3028,7 +3144,7 @@ function renderizarRadarLateral() {
 }
 
 setTimeout(() => {
-    ['endCidade', 'endBairro', 'endLog'].forEach(id => {
+    ['endCidade', 'endBairro', 'endLog', 'solTel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', renderizarRadarLateral);
     });
