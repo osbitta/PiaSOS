@@ -31,7 +31,7 @@
         .drawer-extra.right-hidden { right: 50px; opacity: 0; pointer-events: none; }
         .drawer-extra.right-visible { right: 400px; opacity: 1; pointer-events: auto; border-right: 1px solid var(--border); }
         /* MODAL GERAL */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-content { background: var(--card-bg); width: 95%; max-width: 600px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .modal-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-header); border-radius: 12px 12px 0 0; }
         .modal-body { padding: 20px; overflow-y: auto; }
