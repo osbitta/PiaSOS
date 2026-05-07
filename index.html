@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/components/modals.css">
     <link rel="stylesheet" href="css/pages/monitoramento.css">
     <link rel="stylesheet" href="css/components/painel-ocorrencias.css">
+    <link rel="stylesheet" href="css/pages/mapa.css">
 </head>
 <body>
 
@@ -93,6 +94,7 @@
                 <div class="nav-item" id="nav-monitoramento" onclick="navegar('monitoramento')"><i class="fas fa-broadcast-tower"></i> <span class="nav-text">MONITORAMENTO</span></div>
                 <div class="nav-item" id="nav-alertas" onclick="navegar('alertas')"><i class="fas fa-bullhorn"></i> <span class="nav-text">ALERTAS</span></div>
                 <div class="nav-item" id="nav-frota" onclick="navegar('frota')"><i class="fas fa-car"></i> <span class="nav-text">FROTA</span></div>
+                <div class="nav-item hidden" id="nav-mapa" onclick="navegar('mapa')"><i class="fas fa-map-marked-alt"></i> <span class="nav-text">MAPA</span></div>
                 <div class="nav-item" id="nav-admin" onclick="navegar('admin')"><i class="fas fa-users-cog"></i> <span class="nav-text">ADMIN</span></div>
                 <div class="nav-item hidden" id="nav-moderador" onclick="navegar('moderador')"><i class="fas fa-shield-alt"></i> <span class="nav-text">MODERADOR</span></div>
             </div>
@@ -141,6 +143,8 @@
                                             <div class="input-wrapper">
                                                 <i class="fas fa-map-pin icon-left"></i>
                                                 <input type="text" id="endRef" tabindex="9">
+                                                <input type="hidden" id="ocLat">
+                                                <input type="hidden" id="ocLng">
                                             </div>
                                         </div>
                                         <div style="flex: 1; position: relative;">
@@ -638,6 +642,49 @@
             </div>
             <!-- ===== FIM VIEW MODERADOR ===== -->
 
+            <!-- ===== VIEW MAPA ===== -->
+            <div id="view-mapa" class="hidden" style="position: relative; height: 100%; width: 100%; margin: -20px; border-radius: 8px; overflow: hidden;">
+                <div id="mapa-global" style="height: 100%; width: 100%;"></div>
+                
+                <!-- Drawer Filtros do Mapa -->
+                <button id="mapaDrawerBtn" onclick="toggleMapaDrawer()">
+                    <i class="fas fa-filter"></i>
+                </button>
+
+                <div id="mapaDrawer" class="mapa-drawer hidden">
+                    <h3 class="drawer-title"><i class="fas fa-search-location"></i> Filtros de Mapa</h3>
+                    <div id="mapa-filtro-estado-container" style="margin-bottom: 10px;">
+                        <label>Estado</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-map-marked-alt icon-left"></i>
+                            <select id="mapaFiltroEstado" onchange="mudarEstadoMapa(this.value)">
+                                <option value="PR">Paraná (PR)</option>
+                                <option value="SC">Santa Catarina (SC)</option>
+                                <option value="SP">São Paulo (SP)</option>
+                            </select>
+                            <i class="fas fa-chevron-down" style="position: absolute; right: 10px; color: var(--text-muted); pointer-events: none; font-size: 12px; top: 12px;"></i>
+                        </div>
+                    </div>
+                    <div id="mapa-filtro-cidade-container" style="margin-bottom: 10px; display: none;">
+                        <label>Cidade</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-city icon-left"></i>
+                            <input type="text" id="mapaFiltroCidade" placeholder="Nome da cidade..." oninput="sugerirCidadeMapa(this.value)" autocomplete="off">
+                            <div id="sugestoesCidadeMapa" class="suggestions hidden"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Bairro</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-map icon-left"></i>
+                            <input type="text" id="mapaFiltroBairro" placeholder="Nome do bairro..." oninput="sugerirBairroMapa(this.value)" autocomplete="off">
+                            <div id="sugestoesBairroMapa" class="suggestions hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== FIM VIEW MAPA ===== -->
+
         </div>
         
     </div>
@@ -670,7 +717,7 @@
     </div>
 
     <!-- MODAL DE COMPLEMENTAÇÃO -->
-    <div id="modalComplementacao" class="modal-overlay" style="z-index: 260;">
+    <div id="modalComplementacao" class="modal-overlay">
         <div class="modal-content" style="max-width:500px;">
             <div class="modal-header">
                 <h3>Complementar Ocorrência</h3>
@@ -689,7 +736,7 @@
         </div>
     </div>
 
-<div id="modalEditarEndereco" class="modal-overlay" style="z-index: 260;">
+<div id="modalEditarEndereco" class="modal-overlay">
         <div class="modal-content" style="max-width:600px;">
             <div class="modal-header">
                 <h3>Editar Endereço</h3>
@@ -721,7 +768,7 @@
 
     <!-- DRAWERS MONITORAMENTO -->
     <!-- MODAIS MONITORAMENTO -->
-    <div id="modalOcorrencia" class="modal-overlay" style="z-index:250;">
+    <div id="modalOcorrencia" class="modal-overlay">
         <div class="modal-content" style="max-width:700px; max-height:85vh;">
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div>
@@ -779,7 +826,7 @@
         </div>
     </div>
 
-    <div id="modalAlerta" class="modal-overlay" style="z-index:250;">
+    <div id="modalAlerta" class="modal-overlay">
         <div class="modal-content" style="max-width:700px; max-height:85vh;">
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div>
@@ -836,7 +883,7 @@
         </div>
     </div>
 
-    <div id="modalFinalizacao" class="modal-overlay" style="z-index: 260;">
+    <div id="modalFinalizacao" class="modal-overlay">
         <div class="modal-content" style="max-width:400px;">
             <div class="modal-header">
                 <h3 style="margin:0;">Finalizar Ocorrência</h3>
@@ -859,7 +906,7 @@
         </div>
     </div>
 
-    <div id="modalSelecaoFrota" class="modal-overlay" style="z-index:260;">
+    <div id="modalSelecaoFrota" class="modal-overlay">
         <div class="modal-content" style="max-width:500px;">
             <div class="modal-header">
                 <h3 style="margin:0;">Selecionar Viatura</h3>
@@ -873,14 +920,16 @@
 
 <script src="js/dados_parana.js"></script>
 <script src="js/dados_santacatarina.js"></script>
+<script src="js/dados_saopaulo.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Plus Code JS -->
     <script>var exports = {};</script>
     <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.3/openlocationcode.min.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/mapa.js"></script>
 
-<div id="modalConfigPui" class="modal-overlay" style="z-index: 250;">
+<div id="modalConfigPui" class="modal-overlay">
     <div class="modal-content" style="max-width:500px;">
         <div class="modal-header">
             <h3><i class="fas fa-cog"></i> Configuração PUI (Groq)</h3>
@@ -987,7 +1036,7 @@
 
 
     <!-- MODAL DE PERFIL DO USUÁRIO -->
-    <div id="modalPerfil" class="modal-overlay" style="z-index: 260;">
+    <div id="modalPerfil" class="modal-overlay">
         <div class="modal-content" style="max-width:460px;">
             <div class="modal-header">
                 <h3><i class="fas fa-user-circle" style="margin-right:8px; color:var(--secondary);"></i>Meu Perfil</h3>
