@@ -204,8 +204,9 @@ async function aplicarPui() {
             if (perfil === 'MODERADOR' && tela !== 'moderador') tela = 'moderador';
             if (perfil === 'Admin' && tela === 'moderador') tela = 'atendimento';
             if (perfil !== 'Admin' && perfil !== 'MODERADOR' && ['admin','moderador'].includes(tela)) tela = 'atendimento';
+            if (tela === 'mapa' && perfil !== 'Admin' && perfil !== 'DESPACHANTE') tela = 'atendimento';
 
-            ['atendimento', 'triagem', 'monitoramento', 'frota', 'alertas', 'admin', 'moderador'].forEach(t => {
+            ['atendimento', 'triagem', 'monitoramento', 'mapa', 'frota', 'alertas', 'admin', 'moderador'].forEach(t => {
                 const el = document.getElementById('view-'+t);
                 const nav = document.getElementById('nav-'+t);
                 if(el) el.classList.add('hidden');
@@ -221,6 +222,9 @@ async function aplicarPui() {
             // Carregamentos específicos
             if(tela === 'triagem') carregarTriagem();
             if(tela === 'monitoramento') { carregarMonitoramento(); expandMob('wait'); }
+            if(tela === 'mapa') { 
+                if(typeof initMapaGlobal === 'function') initMapaGlobal(); 
+            }
             if(tela === 'frota') carregarFrota();
             if(tela === 'alertas') { carregarAlertas(); }
             if(tela === 'admin') {
@@ -255,12 +259,16 @@ async function aplicarPui() {
 
             // Controle de visibilidade da navbar por perfil
             const perfil = usuarioAtual.perfil_acesso;
-            const todosNavIds = ['atendimento','triagem','monitoramento','frota','alertas','admin','moderador'];
-            const permitidos = perfil === 'MODERADOR'
-                ? ['moderador']
-                : perfil === 'Admin'
-                    ? ['atendimento','triagem','monitoramento','frota','alertas','admin']
-                    : ['atendimento','triagem','monitoramento','frota','alertas'];
+            const todosNavIds = ['atendimento','triagem','monitoramento','mapa','frota','alertas','admin','moderador'];
+            
+            let permitidos = ['atendimento','triagem','monitoramento','frota','alertas'];
+            if (perfil === 'MODERADOR') {
+                permitidos = ['moderador'];
+            } else if (perfil === 'Admin') {
+                permitidos = ['atendimento','triagem','monitoramento','mapa','frota','alertas','admin'];
+            } else if (perfil === 'DESPACHANTE') {
+                permitidos = ['atendimento','triagem','monitoramento','mapa','frota','alertas'];
+            }
 
             todosNavIds.forEach(id => {
                 const el = document.getElementById('nav-' + id);
@@ -722,7 +730,8 @@ async function aplicarPui() {
             
             timeoutCid = setTimeout(() => { 
                 try {
-                    const arrCidades = (typeof usuarioAtual !== 'undefined' && usuarioAtual.uf_origem === 'SC') ? cidadesSC : cidadesPR;
+                    const uf = (typeof usuarioAtual !== 'undefined') ? usuarioAtual.uf_origem : 'PR';
+                    const arrCidades = uf === 'SC' ? cidadesSC : (uf === 'SP' ? cidadesSP : cidadesPR);
                     const matches = arrCidades.filter(c => _sugNorm(c).includes(termo)).slice(0, 10);
                     box.innerHTML = ''; 
                     if(matches.length){
@@ -889,7 +898,8 @@ async function aplicarPui() {
             if(termo.length < 1 || !cid) { box.classList.add('hidden'); return; } 
             
             const cidNorm = _sugNorm(cid);
-            const arrLocalidades = (typeof usuarioAtual !== 'undefined' && usuarioAtual.uf_origem === 'SC') ? localidadesSC : localidadesPR;
+            const uf = (typeof usuarioAtual !== 'undefined') ? usuarioAtual.uf_origem : 'PR';
+            const arrLocalidades = uf === 'SC' ? localidadesSC : (uf === 'SP' ? localidadesSP : localidadesPR);
             const bairrosDaCidade = arrLocalidades[cidNorm];
             if(!bairrosDaCidade) { box.classList.add('hidden'); return; }
             
@@ -1104,6 +1114,12 @@ async function aplicarPui() {
                 if (!endRefEl.value.includes('GPS:')) {
                     endRefEl.value = (endRefEl.value + refAdd).trim();
                 }
+
+                // Salva coordenadas nos inputs ocultos para o BD
+                const elLat = document.getElementById('ocLat');
+                const elLng = document.getElementById('ocLng');
+                if(elLat) elLat.value = lat;
+                if(elLng) elLng.value = lng;
             }
         }
 
@@ -1151,6 +1167,13 @@ async function aplicarPui() {
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
             };
+
+            const ocLat = document.getElementById('ocLat')?.value;
+            const ocLng = document.getElementById('ocLng')?.value;
+            if (ocLat && ocLng) {
+                payload.latitude = parseFloat(ocLat);
+                payload.longitude = parseFloat(ocLng);
+            }
 
             if (idEmEdicao && ocoAtual && ocoAtual.status === 'EM_TRIAGEM' && destino === 'DESPACHO') {
                 payload.criado_em = new Date().toISOString();
@@ -1210,6 +1233,13 @@ async function aplicarPui() {
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
             };
+
+            const ocLat = document.getElementById('ocLat')?.value;
+            const ocLng = document.getElementById('ocLng')?.value;
+            if (ocLat && ocLng) {
+                payload.latitude = parseFloat(ocLat);
+                payload.longitude = parseFloat(ocLng);
+            }
 
             if (idEmEdicao && ocoAtual && ocoAtual.status === 'EM_TRIAGEM') {
                 payload.criado_em = new Date().toISOString();
@@ -1338,6 +1368,13 @@ async function aplicarPui() {
                 resumo_texto: document.getElementById('ocRelato').value.toUpperCase(),
                 dados_preenchidos: dados
             };
+
+            const ocLat = document.getElementById('ocLat')?.value;
+            const ocLng = document.getElementById('ocLng')?.value;
+            if (ocLat && ocLng) {
+                payload.latitude = parseFloat(ocLat);
+                payload.longitude = parseFloat(ocLng);
+            }
             try {
                 if(idEmEdicao) await api('tb_triagem', `id=eq.${idEmEdicao}`, 'PATCH', payload);
                 else await api('tb_triagem', '', 'POST', payload);
@@ -1846,7 +1883,7 @@ async function aplicarPui() {
             if(!prefixo || !placa) return alert('Preencha prefixo e placa');
             
             try{ 
-                await api('tb_viaturas','', 'POST', { prefixo: prefixo, tipo: tipo, placa: placa, guarnicao: 'LIVRE', status_viatura: 'Disponível', telefone_vtr: telefone, agencia_origem: _agenciaOrigem() }); 
+                await api('tb_viaturas','', 'POST', { prefixo: prefixo, tipo: tipo, placa: placa, guarnicao: 'LIVRE', status_viatura: 'Fora de serviço', telefone_vtr: telefone, agencia_origem: _agenciaOrigem() }); 
                 fecharModal('modalNovaViatura'); 
                 document.getElementById('nv_prefixo').value = '';
                 document.getElementById('nv_tipo').value = 'Rádio Patrulha';
